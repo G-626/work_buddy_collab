@@ -79,8 +79,24 @@ parent, teacher, or student-facing views.*
 ## Notes for materials [open]
 
 - Third person only. Never "I" statements — she finds them childish and exposing.
-- No cartoonish layouts, no "well done!" framing, no star charts. She notices and feels
-  patronised.
+- No cartoonish layouts, no "well done!" framing, no star charts. She notices and
+  feels patronised.
 - Frame challenges as shared ("many people find group work hard") not personal
   ("Priya finds group work hard").
-- Written, not verbal. She reads and re-reads; she does not absorb spoken instructions.
+- Written, not verbal. She reads; she does not absorb spoken instructions.
+
+---
+
+## Freshness stamps
+
+| Section | Updated |
+| --- | --- |
+| Basics | 2025-08-01 |
+| Communication profile | 2025-08-01 |
+| Triggers & sensory | 2025-08-01 |
+| What works | 2025-08-01 |
+| Special interests | 2025-08-01 |
+| Goals | 2025-08-01 |
+| Patterns | — (no session yet) |
+| Session log | — (no session yet) |
+| Clinical | — (never auto-stamped)

@@ -68,3 +68,22 @@ parent, teacher, or student-facing views.*
 
 - Never frame Marco as the problem. New situations are hard for many people — say so.
 - No cartoonish layouts; he notices and feels patronised. Clean, grown-up documents.
+
+---
+
+## Freshness stamps
+
+| Section | Last updated |
+|---|---|
+| Basics | 2025-08-01 |
+| Communication profile | 2025-08-01 |
+| Triggers & sensory | 2025-08-01 |
+| What works | 2025-08-01 |
+| Special interests | 2025-08-01 |
+| Goals | 2025-08-01 |
+| Patterns | — (no session yet) |
+| Session log | — (no session yet) |
+| Clinical | — (never auto-stamped) |
+
+*Stamp refreshes when the section is updated by an approved session or the curator.
+Freshness check flags any section untouched for > 30 days (casecraft step 6).*

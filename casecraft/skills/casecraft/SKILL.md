@@ -45,8 +45,8 @@ elements, flag them in the linter report — do not silently guess.
      cues, help-seeking scripts) appear **word-for-word identical** in every document that
      uses them. If a coping script appears in the Teacher Guide and the Social Story, it
      must be the same sentence. Fix or flag any variation.
-6. **Freshness check.** Read the passport's section date stamps. Flag any section
-   untouched for >30 days: "Section [name] last updated [date] — consider reviewing."
+6. **Freshness check.** Read the passport's `## Freshness stamps` table (deterministic
+   per-section dates). Flag any section untouched for >30 days:
    A stale passport is a liability; perceiving staleness keeps the passport trustworthy.
 7. **Save outputs** to `students/<id>/packs/<YYYY-MM-DD>-<slug>/`:
    - `teacher-guide.md`
