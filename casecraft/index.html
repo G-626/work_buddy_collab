@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaseCraft — Coordinated Support for Every Student</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --text: #1a1a2e;
+    --accent: #2d6a4f;
+    --accent-light: #d8f3dc;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 3rem 0 2.5rem;
+  }
+  .hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .hero .tagline {
+    font-size: 1.25rem;
+    color: var(--muted);
+    max-width: 600px;
+    margin: 0 auto 1rem;
+  }
+  .hero .context {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 0.35rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  /* Problem */
+  .section { margin: 2.5rem 0; }
+  .section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+  }
+  .section p { margin-bottom: 1rem; }
+  .section p:last-child { margin-bottom: 0; }
+
+  /* Stat callout */
+  .stat-row {
+    display: flex;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+  }
+  .stat {
+    flex: 1;
+    min-width: 180px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .stat .number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .stat .label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  /* How it works */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .flow-step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+  .flow-step .step-num {
+    background: var(--accent);
+    color: white;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  .flow-step .step-content h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+  .flow-step .step-content p {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* Moat comparison */
+  .comparison {
+    display: flex;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+  }
+  .comparison .col {
+    flex: 1;
+    min-width: 240px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+  .comparison .col h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .comparison .col.bad h3 { color: #dc2626; }
+  .comparison .col.good h3 { color: var(--accent); }
+  .comparison .col ul {
+    list-style: none;
+    padding: 0;
+  }
+  .comparison .col li {
+    padding: 0.4rem 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .comparison .col li::before {
+    content: "✗ ";
+    color: #dc2626;
+    font-weight: 700;
+  }
+  .comparison .col.good li::before {
+    content: "✓ ";
+    color: var(--accent);
+  }
+
+  /* Demo moment */
+  .demo-moment {
+    background: var(--accent-light);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 0.75rem 0.75rem 0;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .demo-moment h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  .demo-moment p {
+    font-size: 0.95rem;
+    margin: 0;
+  }
+  .demo-moment .quote {
+    font-style: italic;
+    background: white;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin: 0.75rem 0;
+    border: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+
+  /* Tech */
+  .tech-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+  }
+  .tech-tag {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 0.35rem 0.75rem;
+    border-radius: 2rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* Roadmap */
+  .roadmap {
+    margin: 1rem 0;
+  }
+  .roadmap li {
+    padding: 0.4rem 0;
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+  .roadmap li strong { color: var(--text); }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 3rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>CaseCraft</h1>
+    <p class="tagline">Coordinated support for every student.<br>One dossier. One brief. Every audience.</p>
+    <span class="context">Agent Creativity Hackathon &middot; WorkBuddy Track</span>
+  </div>
+
+  <!-- Problem -->
+  <div class="section">
+    <h2>The Problem</h2>
+    <p>
+      Social workers and therapists supporting adolescents with autism spend most of their time
+      on paperwork, not face-to-face support. When a student faces a new situation — a class trip,
+      a work placement, a change of routine — the professional must prepare separate materials for
+      the teacher, the parent, and sometimes the student themselves.
+    </p>
+    <p>
+      Each document takes 30–60 minutes to write well. And when they're written separately,
+      they drift: the teacher says one thing, the parent says another, and the student gets
+      mixed messages at exactly the moment they need consistency most.
+    </p>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="number">~20%</div>
+        <div class="label">of social worker time spent face-to-face with clients</div>
+      </div>
+      <div class="stat">
+        <div class="number">30–60 min</div>
+        <div class="label">to write one personalised support document by hand</div>
+      </div>
+      <div class="stat">
+        <div class="number">3+</div>
+        <div class="label">audiences needing consistent information per situation</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What it does -->
+  <div class="section">
+    <h2>What CaseCraft Does</h2>
+    <p>
+      CaseCraft is a custom agent skill for Tencent WorkBuddy. A social worker types one command
+      with a situation brief. CaseCraft reads the student's curated dossier and generates a
+      <strong>Coordinated Support Pack</strong> — a set of audience-specific documents that agree
+      with each other because they're generated from the same source and checked by the same linter.
+    </p>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>One command</h3>
+          <p><code>/casecraft marco "First work-experience placement at Sunbeam Bakery next Tuesday, 9:00–15:30. Kitchen is warm and mixers are loud."</code></p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Dossier-driven personalisation</h3>
+          <p>The student's profile — reading level, triggers, coping strategies, special interests — selects what each audience needs to know. No re-pasting, no re-explaining.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Coordinated Support Pack generated</h3>
+          <p>Teacher Guide (classroom strategies, warning signs), Parent Guide (home reinforcement, consistent language), and optionally a Social Story (teen-facing, methodology-compliant).</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>Cross-document consistency check</h3>
+          <p>The linter verifies that coping scripts, transition cues, and factual claims are identical across all documents. Contradictions are flagged for professional review.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Why not a chatbot -->
+  <div class="section">
+    <h2>Why Not Just Use a Chatbot?</h2>
+    <p>
+      A professional <em>can</em> paste notes into Gemini and get a plausible document.
+      But a chatbot structurally cannot do what CaseCraft does:
+    </p>
+    <div class="comparison">
+      <div class="col bad">
+        <h3>Generic Chatbot</h3>
+        <ul>
+          <li>No audit against evidence-based methodology</li>
+          <li>No memory of the student's history or past materials</li>
+          <li>Re-paste the dossier for every new document</li>
+          <li>Documents drift — no cross-document consistency</li>
+          <li>No local record or filing system</li>
+        </ul>
+      </div>
+      <div class="col good">
+        <h3>CaseCraft</h3>
+        <ul>
+          <li>Linter checks every output; visible pass/fix/flag report</li>
+          <li>Longitudinal dossier keeps language consistent over months</li>
+          <li>One brief → multiple coordinated documents</li>
+          <li>Cross-document consistency check catches contradictions</li>
+          <li>Files saved per student, indexed and searchable</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo moment -->
+  <div class="section">
+    <h2>The Demo Moment</h2>
+    <p>
+      The 5-minute demo shows two fictional students — <strong>Marco</strong> (14, literal thinker,
+      MTR enthusiast, noise-sensitive) and <strong>Priya</strong> (15, socially anxious, visual
+      learner, art interest) — receiving visibly different Coordinated Support Packs for the
+      same situation.
+    </p>
+    <div class="demo-moment">
+      <h3>Lead: The Identical Sentence</h3>
+      <p>The judge sees one coping script appear word-for-word in both the Teacher Guide and the Parent Guide:</p>
+      <div class="quote">"I can say, 'I need a short break.'"</div>
+      <p>The teacher and the parent are telling the student the exact same thing, in the exact same words. That doesn't happen today.</p>
+    </div>
+    <div class="demo-moment">
+      <h3>Follow: The Contradiction Catch</h3>
+      <p>A deliberate contradiction planted in the fictional dossier (5-min vs 10-min transition warning) is flagged by the linter:</p>
+      <div class="quote">FLAG: Teacher Guide says 5-min warning; Parent Guide says 10-min warning → verify with venue</div>
+      <p>The tool catches a mistake a human would miss.</p>
+    </div>
+  </div>
+
+  <!-- Built with -->
+  <div class="section">
+    <h2>Built With</h2>
+    <div class="tech-list">
+      <span class="tech-tag">Tencent WorkBuddy (Custom Agent Skill)</span>
+      <span class="tech-tag">Markdown-defined skill + templates</span>
+      <span class="tech-tag">Carol Gray Social Stories 10.2 methodology</span>
+      <span class="tech-tag">Cross-document consistency linter</span>
+      <span class="tech-tag">Local file operations (sandboxed)</span>
+    </div>
+    <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--muted);">
+      Designed for pilot readiness: a real professional could install WorkBuddy, copy the skill files,
+      create a real dossier (with pseudonymisation), and start using it with no code changes.
+    </p>
+  </div>
+
+  <!-- Roadmap -->
+  <div class="section">
+    <h2>Roadmap</h2>
+    <ul class="roadmap">
+      <li><strong>Employer Guide</strong> — workplace-facing document for older teens in work experience</li>
+      <li><strong>Batch mode</strong> — one brief → packs for an entire intervention group</li>
+      <li><strong>PDF output</strong> — print-ready documents for sharing</li>
+      <li><strong>Coverage check</strong> — verify every dossier trigger is addressed in at least one document</li>
+      <li><strong>IEP goal drafting</strong> — structured goal generation from assessment notes</li>
+      <li><strong>Pilot with HK Children &amp; Youth Services</strong> — 2–3 social workers, 5 students, 4 weeks</li>
+    </ul>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>
+      CaseCraft &middot; Agent Creativity Hackathon (WorkBuddy Track) &middot;
+      <a href="https://luma.com/agentcreativity" target="_blank">luma.com/agentcreativity</a>
+    </p>
+    <p style="margin-top: 0.5rem;">
+      In partnership with HK Children &amp; Youth Services &middot; All demo data is fictional
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
