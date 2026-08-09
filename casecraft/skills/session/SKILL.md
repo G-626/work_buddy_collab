@@ -10,7 +10,7 @@ Passport accumulates over time.
 |---|---|---|
 | Student ID | yes | Folder name under `students/` (e.g. `marco`) |
 | Session goal | yes | Free text: what the worker is observing for |
-| Capture package | yes | A folder under `students/<id>/sessions/<YYYY-MM-DD>-<slug>/` containing a transcript file (for the demo, pre-written) |
+| Capture package | yes | A folder under `students/<id>/sessions/<YYYY-MM-DD>-<slug>/` containing `transcript.md` (session dialogue) and `capture.md` (Movement Event Stream per `casecraft/docs/schemas/movement-events.md`; mock/simulated for the demo) |
 
 ## Pipeline
 
@@ -22,9 +22,10 @@ every observable is interpreted against it.
 
 ### Step 2 — Load the capture package
 
-Read all files in the session folder. For the hackathon demo, this is a single
-`transcript.md` file (simulated capture). The capture contains raw observations —
-what was said, what happened, timestamps.
+Read all files in the session folder: `transcript.md` (simulated transcription) and
+`capture.md` (Movement Event Stream per `casecraft/docs/schemas/movement-events.md` —
+fixed vocabulary, no affect labels). The capture contains raw observations — what was
+said, what happened, timestamps.
 
 **Hard rule: observables only.** The capture layer produces *what happened* — quotes,
 counts, timestamps, movement events from the fixed vocabulary (see CONTEXT.md §4:
@@ -73,6 +74,8 @@ On approval, merge the session summary into the passport:
 - Update Patterns `[team]`: aggregate movement-event counts aligned to context
   (what activity, what sounds/transitions, time of day). Output is descriptive and
   correlational — never a verdict. Surprising patterns route to the worker as questions.
+  Render per `templates/patterns.md` (baselines until ≥ 3 sessions; positive-first
+  opening line; every row traceable to capture.md).
 - Stamp each updated section with the session date (for freshness checking)
 
 ### Step 7 — Regenerate stakeholder views
