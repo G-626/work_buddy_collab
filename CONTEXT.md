@@ -1,75 +1,159 @@
 # CaseCraft
 
-CaseCraft is a WorkBuddy custom agent skill, built for the Agent Creativity Hackathon (WorkBuddy track), that helps professionals (social workers, therapists) who support adolescents with mild-to-moderate autism spectrum disorder. Its differentiator over generic chatbots: every output is **linted against an evidence-based methodology with a visible audit report**, grounded in a longitudinal professional-curated dossier, and filed into a per-student library — things a one-shot chatbot structurally cannot do.
+CaseCraft is a WorkBuddy custom agent skill suite for the Agent Creativity Hackathon (WorkBuddy track), helping professionals (social workers, therapists, SEN teachers) support adolescents with mild-to-moderate autism spectrum disorder.
 
-## Language
+Its core artifact is the **Student Passport** — a living, versioned, single-source-of-truth document per student that coordinates every adult around the child. The passport is fed by a **session agent loop** (session capture → ingest → review → passport delta) and rendered into role-specific, linter-verified **stakeholder views** (teacher, parent, therapist, and the student's own materials).
 
-**CaseCraft**:
-The product — a WorkBuddy custom agent skill suite for ASD support professionals. See [ADR-0001](docs/adr/0001-professional-facing-tool.md) for why we build for professionals, not teens.
-_Avoid_: the app, the tool, the assistant, the chatbot, Bridge (former working name, retired)
+The differentiator over a generic chatbot remains structural: every output is linted against an evidence-based methodology with a visible audit report, grounded in a longitudinal curated passport, and held consistent across all stakeholders in one pass — things a one-shot chatbot cannot do.
 
-**Coordinated Support Pack**:
-The core abstraction CaseCraft produces: a set of audience-specific documents generated from one Student Dossier and one situation brief, kept consistent with each other and with the student's history by the linter and the dossier. The differentiator over a chatbot is *coordination* — anyone can generate one document; generating several that agree with each other is the moat. Implemented as a single WorkBuddy skill with one command and multiple output templates — not multiple skills — because WorkBuddy has no documented sub-skill mechanism, and the consistency check must run across all documents in one pass.
-_Avoid_: pack, bundle, set of documents, Bridge (this is what "Bridge" was trying to name)
+---
 
-**Command**:
-The professional's entry point: `/casecraft <student-id> "<situation brief>"`. No `--audiences` flag — the skill reads the Student Dossier's audience tags and generates the appropriate documents automatically. The dossier is the control mechanism: if a section is tagged `[teacher]`, the Teacher Guide is generated; if tagged `[parent]`, the Parent Guide is generated. This keeps the command surface minimal (one brief, one pack) and eliminates the mismatch risk of the professional requesting an audience the dossier doesn't cover.
-_Avoid_: slash command, CLI, invocation
+## 1. Why this product
 
-**Situation Brief**:
-The free-text input the professional types into the Command. No structured template — the skill markdown includes a brief-writing guide ("A good brief covers: what, when, where, who, what the student will do, what's known to be hard") and the linter flags missing elements (e.g. "No timing information provided — story will use vague language"). Free text keeps the interaction natural; the guide and linter catch thin briefs.
-_Avoid_: brief, input, prompt, form
+An autistic student in Hong Kong is supported by a constellation of adults: a classroom teacher, a parent, an educational/behavioral therapist, and a school social worker. Each of them rebuilds an understanding of the same child from scratch — through meetings, forwarded notes, and guesswork. Information about the child lives in fragmented silos (school records, therapist notes, family conversations), goes stale, and never reaches the right person in the right form at the right time. Every school transition, new teacher, or new situation resets this understanding to zero.
 
-**Linter Report**:
-The audit trail for one Command invocation. Two levels of visibility: (1) a **summary line** in the command response — e.g. "3 documents generated, 12 checks passed, 2 auto-fixed, 1 flagged for your review" — this is the demo moment that shows the tool doing work, not just generating text. (2) The **full report** saved to `linter-report.md` in the Pack Folder — every check, pass/fix/flag status, before→after for auto-fixes, assumptions made, questions for the reviewer. The full report is for the professional's audit needs (supervision, quality assurance), not for sharing with teachers or parents.
-_Avoid_: report, log, output
+CaseCraft is designed to replace this with one coordinated system: **one passport, kept current by every session, rendered into each stakeholder's own lens.**
 
-**Pack Folder**:
-The output of one Command invocation: a dated folder under `students/<id>/packs/<YYYY-MM-DD>-<slug>/` containing one file per generated document (`teacher-guide.md`, `parent-guide.md`, optional `social-story.md`) plus `linter-report.md` (the audit trail, for the professional — not shared). Individual files map to the professional's sharing workflow (send Teacher Guide to teacher, Parent Guide to parent). PDF generation is roadmap (`--format pdf`).
-_Avoid_: output folder, results, deliverables
+---
 
-**Cross-Document Consistency Check**:
-The linter pass that runs across all documents in a Coordinated Support Pack to verify they agree with each other. Two levels in the Hackathon MVP: (1) **Shared facts** — factual claims (times, names, strategies, coping options) are extracted from each document and contradictions are flagged (e.g. Teacher Guide says 5-min warning, Parent Guide says 10-min warning → FLAG). (2) **Shared language** — key phrases (coping scripts, transition cues) must appear word-for-word identical across all documents that use them. A third level (coverage — every dossier trigger addressed in at least one document) is roadmap.
-_Avoid_: consistency linter, cross-check, alignment pass
+## 2. The Agent Loop (system architecture)
 
-**Pilot Readiness**:
-The project is designed so a real professional could install WorkBuddy, copy the skill files, create a real Student Dossier (with pseudonymisation per ADR-0002), and start using it with no code changes. The demo dossiers are examples, not the product. A one-page "getting started" guide and pseudonymisation checklist are part of the hackathon deliverable. Actively piloting with HK Children & Youth Services is pitched as an aspiration (closing slide), not a commitment — overpromising before knowing the charity's capacity damages credibility.
-_Avoid_: deployment, production, launch
+```
+┌───────────────────────────────────────────────────────────────────┐
+│ 1. SESSION START — the worker sets the session goal first          │
+│    /session marco --goal="work experience: ask for help              │
+│    when unsure, no more than 2 prompts"                             │
+├───────────────────────────────────────────────────────────────────┤
+│ 2. CAPTURE (worker's device, parent consent recorded)               │
+│    Audio + Video — transcription (Whisper) + body-language          │
+│    analysis (MediaPipe, external engine)                            │
+│    → OBSERVABLES ONLY: events, quotes, counts, timestamps           │
+│    → NO emotional inference (hard rule — see §3)                    │
+├───────────────────────────────────────────────────────────────────┤
+│ 3. INGESTION — WorkBuddy skill /session reads the capture package   │
+│    → structured session draft: observed events, goal progress,      │
+│      staff-worthy quotes, "questions for the worker"                 │
+├───────────────────────────────────────────────────────────────────┤
+│ 4. REVIEW GATE — the worker approves or edits within ~90 seconds    │
+│    (an capture never auto-commits — human-in-the-loop by design)    │
+├───────────────────────────────────────────────────────────────────┤
+│ 5. PASSPORT DELTA — versioned merge into the Student Passport       │
+│    (goals, triggers, scripts, counts, freshness stamps)             │
+├───────────────────────────────────────────────────────────────────┤
+│ 6. STAKEHOLDER VIEWS — regenerate role-specific outputs             │
+│    Teacher Guide · Parent Guide · Therapist Sheet · Social Story    │
+│    · passport.html (family/team UI) — all linter-checked            │
+└───────────────────────────────────────────────────────────────────┘
+```
 
-**Hackathon MVP**:
-The committed hackathon scope: one command that produces a Coordinated Support Pack with two audiences — Teacher Guide and Parent Guide — from one Student Dossier and one situation brief. The Social Story is retained as an optional third document within the pack (not a standalone command). Employer Guide is designed-for but not built — the output directory structure and template registry must make adding a new audience a matter of dropping in a new template, not restructuring. `/casenote` and `/parentupdate` remain cut (thin chatbot wrappers). `/iepgoals` is roadmap. Demo lead: single-student pack generation, then batch across 2–3 fictional dossiers. Demo narrative: lead with the identical-sentence moment (Level 2 — show one coping script appearing word-for-word in both guides), then follow with the contradiction catch (Level 1 — a deliberate contradiction planted in the fictional dossier, flagged by the linter). Development constraint: WorkBuddy runs on a separate device; testing is asynchronous.
-_Avoid_: the product, v1, full version
+Tools flow: capture files drop into `sessions/<id>/` on the worker's local device → WorkBuddy skill `ingestion` orchestrates read + synthesis → outputs land under `students/<id>/`.
 
-**Case Note**:
-A structured clinical record generated from rough session observations. Distinguishes "observed" from "inferred" and never invents progress. Cut from MVP — thin chatbot wrapper. Roadmap only.
-_Avoid_: note, record, summary
+## 3. Hard principles (the moat)
 
-**Social Story**:
-A personalised, literal-language narrative that prepares a teen for a specific situation, following Carol Gray's Social Stories 10.2 methodology. In the Coordinated Support Pack, it is the **optional teen-facing document** — the skill decides whether to include it based on the situation brief and dossier (e.g. a new transition or unfamiliar event warrants one; a routine situation may only need Teacher + Parent guides). This keeps the demo focused while showing the skill makes judgements, not just generates documents. Linted against the 10.2 criteria.
-_Avoid_: story, script, guide
+1. **Observables, never inferences.** The capture layer emits *what happened* (covered ears when the fire alarm drill sounded) — never *how the child felt* (was anxious). Emotional inferences are not passed to the model and are not written into the passport. Inferred labels also fail with autistic children: movement patterns are individual and day-dependent, and no classifier reliably maps pose → affect.
+2. **Human-in-the-loop review gate.** Auto-committed session summaries erode trust fast. The worker reviews a structured draft in ~90 seconds; anything ambiguous is surfaced to them as a question, and every passport change is attributable to an approved session.
+3. **One source of truth.** The Student Passport is the single artifact all views derive from. Nobody re-types facts about the child; the passport is the dossier, the memory, and the audit trail in one.
+4. **Verifiable output.** Two passes, both file-level: pass 1 generates documents; pass 2 reads the saved artifacts and lints them (methodology + cross-document consistency + **sensitivity leak check**). Some checks are deterministic (verbatim script presence across documents, freshness of sections) and can be shown on stage as facts, not claims.
+5. **Local-first files.** Passport and sessions live in the worker's authorized local folders; prompts use pseudonyms; full identifiers stay local. All demo data (incl. media) is fictional/simulated.
+6. **No clinical claims.** The passport describes *what supports the student* — never a diagnosis. The passport header carries an explicit "this is not a diagnostic/clinical document" line.
 
-**Teacher Guide**:
-A staff-facing document in the Coordinated Support Pack: what the teacher should know about the student's upcoming situation, classroom strategies to reinforce, warning signs to watch for, and language to use (and avoid). Written for a busy mainstream teacher, not a specialist.
-_Avoid_: lesson plan, classroom notes, staff briefing
+## 4. The Student Passport (the artifact)
 
-**Parent Guide**:
-A parent/caregiver-facing document in the Coordinated Support Pack: what the student is preparing for, what to reinforce at home, what language to use (consistent with the Teen Guide and Teacher Guide), and what to avoid saying. Plain language, adjustable reading level, optional Chinese.
-_Avoid_: parent update, letter home, caregiver notes
+Per-student living document: `students/<id>/passport.md` (plus `sessions/` and `packs/` folders).
 
-**Employer Guide**:
-A workplace-facing document in the Coordinated Support Pack: what an employer or supervisor should know, task expectations, communication tips, and what to avoid. Relevant only for older teens in work experience. Roadmap — not in the Hackathon MVP.
-_Avoid_: job description, HR notes
+| Section | Content | Sensitivity |
+|---|---|---|
+| Basics | Age, placement, reading level, languages | open |
+| Communication profile | Literal/visual, scripts, help-seeking style | open |
+| Triggers & sensory | Noise, transitions, crowding + coping plans | open (parent version simplified) |
+| What works | Evidence from past support | open |
+| Special interests | Regulation tools (e.g. MTR map) | open |
+| Goals (current) | From support plan per term | team |
+| Session log | Approved session facts, counted events, timestamps | team |
+| Clinical/clinical | Diagnosis, medication, clinical reports | team/clinical (never in parent/teacher/student views) |
 
-**Parent Update**:
-A plain-language summary generated from case notes, for parents/caregivers. Cut from MVP — thin chatbot wrapper. Superseded by the Parent Guide within the Coordinated Support Pack. Roadmap only.
-_Avoid_: update, email, report
+Versioning: every approved session delta bumps the version and refreshes the date stamp. A **freshness rule**: any section untouched for >30 days surfaces a flag in the next linter run — a stale passport is a liability, and perceiving staleness keeps the passport trustworthy.
 
-**Student Dossier**:
-A folder of professional-curated files (assessment.md, profile.md, past notes) that personalises all outputs. Written by the professional, not the teen. The main file (`profile.md`) uses **audience tags** on each section (e.g. `[teacher]`, `[parent]`, `[teacher, parent]`) to declare which audiences that section is relevant to — the skill reads tags to select content per audience, rather than inferring relevance. In the hackathon demo, all dossiers are fully fictional. For privacy, professionals should use pseudonyms or initials in prompts; full identifiers stay in local files only. See [ADR-0002](docs/adr/0002-privacy-reframing.md).
+## 5. Stakeholder views & the leak rule
 
-Demo dossiers: **Marco** (14, literal thinker, MTR interest, loud-noise sensitivity, ear defenders) and **Priya** (15, strong verbal skills, high social anxiety, masking behaviour, no sensory issues, visual learner, art interest) — chosen for maximum contrast so personalisation is undeniable in a 5-minute demo. A third dossier is stretch scope.
+The passport is never handed out raw. Stakeholders get role-specific views (see matrix):
+
+| View | Contains | Never contains |
+|---|---|---|
+| Teacher Guide | Communication style, supports, warning signs, language to use/avoid | Diagnosis, clinical history |
+| Parent Guide | What the child is preparing for, what to reinforce at home, plain language, optional Chinese | Diagnosis, clinical records |
+| Therapist Summary | Full working detail, goals, session log | — (clinically scoped) |
+| Student materials (Social Story) | Situation-specific narrative | Diagnosis, labels, "problem" framing |
+| passport.html | Curated family/team dashboard (permission-filtered) | Anything not allowed for the viewer |
+
+**Sensitivity leak check** (new linter class): every view is verified against `[open] / [team] / [clinical]` tags — a clinical-tagged section appearing in the Parent Guide is a blocking FLAG, the same way a 10.2 violation is. This is the demo moment other teams can't copy: catch a planted leak on stage.
+
+## 6. Glossary
+
+**Student Passport**: the living per-student source of truth described above. Supersedes and absorbs the former "Student Dossier" — same folder location, upgraded contract (sections, tags, versioning). Never the product of one prompt; always the product of a history of approved sessions.
 _Avoid_: profile, record, file
 
-**Professional**:
-The social worker, therapist, or counsellor who operates CaseCraft. The beneficiary is the teen, but the professional is the user.
-_Avoid_: user, operator, clinician
+**Coordinated Support Pack**: The set of audience-specific documents generated from the passport + a session/goal context, kept consistent by the linter. The differentiator is *coordination* — anyone can generate one document; generating several that agree with each other, and with the passport, is the moat.
+_Avoid_: pack, bundle, set of documents
+
+**Session**: One recorded interaction (therapy session, home visit, lesson observation) with a goal, a capture package, and an approved summary. The unit of intake for the passport.
+
+**Agent Loop**: the 6-step pipeline in section 2. The shape of the product: capture → ingest → summarize → review → passport delta → views.
+_Avoid_: pipeline (in pitch language), flow, automation
+
+**Observables**: verifiable events captured from a session — quotes, counts, timestamps, occurrences ("covered ears when the alarm drill sound played"). The only thing the model may consume and the passport may record. Never emotions, never attributions.
+_Avoid_: analysis, insights (for raw captures)
+
+**Review Gate**: the ~90-second worker approval step before a session summary merges into the passport. Consent of the human is the trust mechanism of the system.
+_Avoid_: approval flow, moderation
+
+**Sensitivity Leak**: a linter finding where a restricted section (e.g. clinical) appears in a view that must not contain it (e.g. Parent Guide). Blocking FAIL.
+_Avoid_: privacy error, data leakage
+
+**Command**: The professional's entry surface. Primary: `/session <student-id> --goal="..."` (capture → summary → passport) and `/casecraft <student-id> "brief"` (specialized pack generation). No `--audiences` flag — audience tags live in the passport; the skill reads them.
+_Avoid_: slash command, CLI, invocation
+
+**Situation Brief**: Free-text context for document generation; the linter flags missing elements ("No timing info").
+_Avoid_: brief, prompt, form
+
+**Linter Report**: Audit trail per invocation: summary line in the response, full `linter-report.md` in the pack folder. Covers: methodology checks, cross-document consistency, freshness, sensitivity leaks, assumptions, questions for the reviewer.
+_Avoid_: report, log
+
+**Social Story**: personalised literal-language narrative for a specific situation (Carol Gray 10.2), optional teen-facing document of the pack. Linted against the 10.2 criteria.
+_Avoid_: story, script, guide
+
+**Teacher Guide / Parent Guide / Therapist Summary**: The role-specific views generated from the passport (see section 5). Written for busy mainstream professionals/non-specialists, plain language, correct register.
+_Avoid_: lesson plan, letter home, staff briefing
+
+**passport.html**: the readable, printable UI for families and teams, generated from the passport (permission-filtered). The hackathon's answer to "where do stakeholders actually read this".
+_Avoid_: dashboard, portal, app
+
+**Pilot Readiness**: The stage where a professional installs WorkBuddy, copies the skills, creates a real (pseudonymized) passport, and starts using the loop with no code changes. Actively piloting with HK Children & Youth Services is pitched as an aspiration, not a commitment.
+_Avoid_: deployment, production
+
+**Hackathon MVP**: One /session command + the review gate + passport delta + two views (Teacher Guide, Parent Guide) + leak-check linter. Batch = /session ... --batch across 2–3 fictional dossiers (Marco, Priya). Demo media is always fictional/simulated — no real child's audio/video is ever captured or shown.
+_Avoid_: the product, v1, full version
+
+## 7. Commands (surface)
+
+```
+/session <student-id> --goal="<goal>"                 # start a session (capture → draft → review)
+/session <student-id> --summary <approve|edit> ...    # the review gate
+/casecraft <student-id> "<situation brief>"           # generate a stakeholder pack
+/casecraft <student-id> [lens=teacher|parent|therapist|story]
+/session batch "…" --students id1,id2,…               # group sessions (one real brief → per-child deltas)
+/passport <student-id> view [lens]                    # regenerate passport.html/view
+```
+
+## 8. Why not just a chatbot (the pitch in one paragraph)
+
+A professional *can* paste session notes into Gemini and get a plausible teacher guide. What they cannot get: (1) **an audit** — every output is linted against methodology + consistency + sensitivity rules, with visible proof; (2) **a living passport** — one source of truth that accumulates across months, keeps voice, scripts, and facts aligned, and follows the student through transitions; (3) **the loop** — sessions feed the passport without the professional re-typing history, and stakeholder views re-render from a single approved delta. Generic chatbots start from zero every conversation. CaseCraft accumulates.
+
+## 9. Roadmap (not in MVP)
+
+- Messenger delivery: post generated view/PDF into Telegram/Slack for the relevant stakeholder (WorkBuddy remote control — "sponsored feature" demo).
+- `/casenote`: rapid pre-passport capture for talks without recording.
+- Employer Guide: work-experience lens for older teens.
+- Teen co-authorship: a “my side” passport section the student co-edits (self-advocacy best practice).
+- True emotion-adjacent research (with consent + human validation) — only ever outputs observables.
+- Datasets & labels for event classification (still observable-only).
