@@ -43,7 +43,15 @@ Score the drafted story against every check. Status per check: PASS / FIXED / FL
 | D2 | Sensory/trigger content is honest and paired with a concrete coping option from the dossier | FLAG if coping option invented |
 | D3 | Names, dates, places spelled exactly as in the brief | FIXED: correct to brief |
 
-## E. Report format
+## E. Consistency (cross-document)
+
+| # | Check | Auto-fix |
+|---|---|---|
+| E1 | Language examples (coping scripts, transition cues) are **word-for-word identical** to those in the Teacher Guide and Parent Guide | FIXED: align to the dossier's version; FLAG if the dossier itself is ambiguous |
+| E2 | Factual claims (times, names, strategies, coping options) do not contradict any other document in the pack | FLAG any contradiction (Level 1) |
+| E3 | Coping options mentioned are consistent with the dossier's "What works" section | FLAG if a strategy appears here that the dossier doesn't mention |
+
+## F. Report format
 
 Output the report as a table: `Check | Status | Detail (before → after, or flag reason)`,
 followed by:
@@ -51,7 +59,7 @@ followed by:
 - **Questions for the reviewer** (facts to confirm with venue/family/school)
 - One-line verdict: `Ready for review` / `Needs reviewer input on N item(s)`
 
-## F. Why this linter exists
+## G. Why this linter exists
 
 The most common way practitioners' Social Stories go wrong is not grammar — it is
 **criteria drift**: too many directive sentences, second-person commands, vague timing

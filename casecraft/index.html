@@ -251,7 +251,7 @@
   <!-- Hero -->
   <div class="hero">
     <h1>CaseCraft</h1>
-    <p class="tagline">Coordinated support for every student.<br>One dossier. One brief. Every audience.</p>
+    <p class="tagline">One passport, kept current by every session,<br>rendered into each stakeholder's own lens.</p>
     <span class="context">Agent Creativity Hackathon &middot; WorkBuddy Track</span>
   </div>
 
@@ -259,15 +259,15 @@
   <div class="section">
     <h2>The Problem</h2>
     <p>
-      Social workers and therapists supporting adolescents with autism spend most of their time
-      on paperwork, not face-to-face support. When a student faces a new situation — a class trip,
-      a work placement, a change of routine — the professional must prepare separate materials for
-      the teacher, the parent, and sometimes the student themselves.
+      An autistic student in Hong Kong is supported by a constellation of adults: a classroom
+      teacher, a parent, a therapist, a school social worker. Each rebuilds an understanding of
+      the same child from scratch — through meetings, forwarded notes, and guesswork. Information
+      lives in fragmented silos, goes stale, and never reaches the right person in the right form
+      at the right time.
     </p>
     <p>
-      Each document takes 30–60 minutes to write well. And when they're written separately,
-      they drift: the teacher says one thing, the parent says another, and the student gets
-      mixed messages at exactly the moment they need consistency most.
+      Every school transition, new teacher, or new situation resets this understanding to zero.
+      Social workers spend ~20% of their time face-to-face with clients — the rest is paperwork.
     </p>
     <div class="stat-row">
       <div class="stat">
@@ -279,8 +279,8 @@
         <div class="label">to write one personalised support document by hand</div>
       </div>
       <div class="stat">
-        <div class="number">3+</div>
-        <div class="label">audiences needing consistent information per situation</div>
+        <div class="number">0</div>
+        <div class="label">memory between sessions — every new professional starts from scratch</div>
       </div>
     </div>
   </div>
@@ -289,38 +289,43 @@
   <div class="section">
     <h2>What CaseCraft Does</h2>
     <p>
-      CaseCraft is a custom agent skill for Tencent WorkBuddy. A social worker types one command
-      with a situation brief. CaseCraft reads the student's curated dossier and generates a
-      <strong>Coordinated Support Pack</strong> — a set of audience-specific documents that agree
-      with each other because they're generated from the same source and checked by the same linter.
+      CaseCraft is a custom agent skill for Tencent WorkBuddy. Its core artifact is the
+      <strong>Student Passport</strong> — a living, versioned, single-source-of-truth document
+      per student that coordinates every adult around the child.
+    </p>
+    <p>
+      The passport is fed by a <strong>session agent loop</strong>: the worker sets a goal,
+      observes the session, reviews a structured draft, and approves it. The passport updates.
+      Stakeholder views — Teacher Guide, Parent Guide, Social Story — re-render from the
+      updated passport, all linter-checked.
     </p>
     <div class="flow">
       <div class="flow-step">
         <div class="step-num">1</div>
         <div class="step-content">
-          <h3>One command</h3>
-          <p><code>/casecraft marco "First work-experience placement at Sunbeam Bakery next Tuesday, 9:00–15:30. Kitchen is warm and mixers are loud."</code></p>
+          <h3>Set the session goal</h3>
+          <p><code>/session marco --goal="ask for help when unsure, no more than 2 prompts"</code></p>
         </div>
       </div>
       <div class="flow-step">
         <div class="step-num">2</div>
         <div class="step-content">
-          <h3>Dossier-driven personalisation</h3>
-          <p>The student's profile — reading level, triggers, coping strategies, special interests — selects what each audience needs to know. No re-pasting, no re-explaining.</p>
+          <h3>Capture and ingest</h3>
+          <p>The capture layer produces observables only — events, quotes, counts, timestamps. No emotional inference. The ingestion skill drafts a structured session summary.</p>
         </div>
       </div>
       <div class="flow-step">
         <div class="step-num">3</div>
         <div class="step-content">
-          <h3>Coordinated Support Pack generated</h3>
-          <p>Teacher Guide (classroom strategies, warning signs), Parent Guide (home reinforcement, consistent language), and optionally a Social Story (teen-facing, methodology-compliant).</p>
+          <h3>Review gate</h3>
+          <p>The worker approves or edits the draft in ~90 seconds. Nothing merges into the passport without human approval.</p>
         </div>
       </div>
       <div class="flow-step">
         <div class="step-num">4</div>
         <div class="step-content">
-          <h3>Cross-document consistency check</h3>
-          <p>The linter verifies that coping scripts, transition cues, and factual claims are identical across all documents. Contradictions are flagged for professional review.</p>
+          <h3>Passport delta + views</h3>
+          <p>The approved session merges into the passport. All stakeholder views regenerate from the updated passport, linted for methodology, consistency, and sensitivity leaks.</p>
         </div>
       </div>
     </div>
@@ -330,7 +335,7 @@
   <div class="section">
     <h2>Why Not Just Use a Chatbot?</h2>
     <p>
-      A professional <em>can</em> paste notes into Gemini and get a plausible document.
+      A professional <em>can</em> paste session notes into Gemini and get a plausible teacher guide.
       But a chatbot structurally cannot do what CaseCraft does:
     </p>
     <div class="comparison">
@@ -341,17 +346,17 @@
           <li>No memory of the student's history or past materials</li>
           <li>Re-paste the dossier for every new document</li>
           <li>Documents drift — no cross-document consistency</li>
-          <li>No local record or filing system</li>
+          <li>No sensitivity controls — clinical info can leak into parent views</li>
         </ul>
       </div>
       <div class="col good">
         <h3>CaseCraft</h3>
         <ul>
           <li>Linter checks every output; visible pass/fix/flag report</li>
-          <li>Longitudinal dossier keeps language consistent over months</li>
-          <li>One brief → multiple coordinated documents</li>
-          <li>Cross-document consistency check catches contradictions</li>
-          <li>Files saved per student, indexed and searchable</li>
+          <li>Living passport accumulates across sessions and months</li>
+          <li>One session → all views regenerate from one source</li>
+          <li>Cross-document consistency + sensitivity leak checks</li>
+          <li>Files saved per student, versioned, freshness-flagged</li>
         </ul>
       </div>
     </div>
@@ -361,10 +366,9 @@
   <div class="section">
     <h2>The Demo Moment</h2>
     <p>
-      The 5-minute demo shows two fictional students — <strong>Marco</strong> (14, literal thinker,
-      MTR enthusiast, noise-sensitive) and <strong>Priya</strong> (15, socially anxious, visual
-      learner, art interest) — receiving visibly different Coordinated Support Packs for the
-      same situation.
+      The 5-minute demo shows the full agent loop for two fictional students — <strong>Marco</strong>
+      (14, literal thinker, MTR enthusiast, noise-sensitive) and <strong>Priya</strong> (15, socially
+      anxious, visual learner, art interest).
     </p>
     <div class="demo-moment">
       <h3>Lead: The Identical Sentence</h3>
@@ -373,10 +377,16 @@
       <p>The teacher and the parent are telling the student the exact same thing, in the exact same words. That doesn't happen today.</p>
     </div>
     <div class="demo-moment">
-      <h3>Follow: The Contradiction Catch</h3>
-      <p>A deliberate contradiction planted in the fictional dossier (5-min vs 10-min transition warning) is flagged by the linter:</p>
-      <div class="quote">FLAG: Teacher Guide says 5-min warning; Parent Guide says 10-min warning → verify with venue</div>
-      <p>The tool catches a mistake a human would miss.</p>
+      <h3>Follow: The Sensitivity Leak Catch</h3>
+      <p>A planted leak — clinical information appearing in a Parent Guide — is caught by the linter:</p>
+      <div class="quote">FAIL: Clinical-tagged section appeared in Parent Guide → blocked from delivery</div>
+      <p>The system catches its own problems, file-verified. No chatbot does this.</p>
+    </div>
+    <div class="demo-moment">
+      <h3>Close: The Freshness Flag</h3>
+      <p>A passport section untouched for >30 days surfaces a flag:</p>
+      <div class="quote">FLAG: "Special interests" last updated 32 days ago — consider reviewing</div>
+      <p>A stale passport is a liability. Perceiving staleness keeps the passport trustworthy.</p>
     </div>
   </div>
 
@@ -385,14 +395,16 @@
     <h2>Built With</h2>
     <div class="tech-list">
       <span class="tech-tag">Tencent WorkBuddy (Custom Agent Skill)</span>
-      <span class="tech-tag">Markdown-defined skill + templates</span>
+      <span class="tech-tag">Markdown-defined skills + templates</span>
       <span class="tech-tag">Carol Gray Social Stories 10.2 methodology</span>
       <span class="tech-tag">Cross-document consistency linter</span>
+      <span class="tech-tag">Sensitivity leak check</span>
+      <span class="tech-tag">Freshness flagging</span>
       <span class="tech-tag">Local file operations (sandboxed)</span>
     </div>
     <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--muted);">
       Designed for pilot readiness: a real professional could install WorkBuddy, copy the skill files,
-      create a real dossier (with pseudonymisation), and start using it with no code changes.
+      create a real passport (with pseudonymisation), and start using the loop with no code changes.
     </p>
   </div>
 
@@ -400,11 +412,11 @@
   <div class="section">
     <h2>Roadmap</h2>
     <ul class="roadmap">
+      <li><strong>Messenger delivery</strong> — post generated views into Telegram/Slack for the relevant stakeholder (WorkBuddy remote control)</li>
       <li><strong>Employer Guide</strong> — workplace-facing document for older teens in work experience</li>
-      <li><strong>Batch mode</strong> — one brief → packs for an entire intervention group</li>
+      <li><strong>Teen co-authorship</strong> — a "my side" passport section the student co-edits (self-advocacy best practice)</li>
+      <li><strong>passport.html</strong> — readable, printable UI for families and teams</li>
       <li><strong>PDF output</strong> — print-ready documents for sharing</li>
-      <li><strong>Coverage check</strong> — verify every dossier trigger is addressed in at least one document</li>
-      <li><strong>IEP goal drafting</strong> — structured goal generation from assessment notes</li>
       <li><strong>Pilot with HK Children &amp; Youth Services</strong> — 2–3 social workers, 5 students, 4 weeks</li>
     </ul>
   </div>

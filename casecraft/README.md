@@ -1,8 +1,10 @@
-# CaseCraft — SocialStory Skill (Hackathon Scaffold)
+# CaseCraft — Coordinated Support Pack Skill (Hackathon Scaffold)
 
-A WorkBuddy Custom Agent Skill that drafts **methodology-compliant, personalised Social Stories**
-for adolescents with mild-to-moderate ASD. The operator is a **professional** (social worker,
-therapist, SEN teacher) — never the teen. Every output is a **draft for professional review**.
+A WorkBuddy Custom Agent Skill that generates a **Coordinated Support Pack** — a set of
+audience-specific documents (Teacher Guide, Parent Guide, optional Social Story) from one
+Student Dossier and one situation brief, kept consistent with each other by cross-document
+linting. The operator is a **professional** (social worker, therapist, SEN teacher) — never
+the teen. Every output is a **draft for professional review**.
 
 Built for the Agent Creativity Hackathon (WorkBuddy Track) —
 https://luma.com/agentcreativity
@@ -12,59 +14,78 @@ https://luma.com/agentcreativity
 ```
 casecraft/
 ├── commands/
-│   └── socialstory.md                 # Slash command definition (/socialstory)
+│   ├── session.md                     # /session — the primary command (agent loop)
+│   └── casecraft.md                   # /casecraft — pack generation from passport
 ├── skills/
-│   └── socialstory/
-│       ├── SKILL.md                   # Skill orchestration (inputs → pipeline → outputs)
+│   ├── session/
+│   │   └── SKILL.md                   # Agent loop: capture → ingest → review → passport → views
+│   └── casecraft/
+│       ├── SKILL.md                   # Pack generation: passport → views → lint → save
 │       └── templates/
-│           ├── story-template.md      # Generation rules (sentence types, language, register)
-│           ├── linter-checklist.md    # Methodology linter (checks + auto-fix rules)
-│           └── companion-template.md  # Staff/parent one-pager template
-├── students/                          # Fictional demo dossiers (per-student folders)
-│   └── marco/
-│       ├── profile.md                 # The dossier — professional-curated student profile
-│       └── stories/
-│           └── index.md               # Longitudinal story library index
+│           ├── teacher-guide.md       # Teacher Guide generation rules
+│           ├── parent-guide.md        # Parent Guide generation rules
+│           ├── social-story.md        # Social Story generation rules (Carol Gray 10.2)
+│           ├── linter-teacher-guide.md    # Teacher Guide linter checks
+│           ├── linter-parent-guide.md     # Parent Guide linter checks
+│           ├── linter-social-story.md     # Social Story linter checks (10.2 + cross-doc)
+│           └── linter-sensitivity-leak.md # Sensitivity leak check (blocking)
+├── students/                          # Fictional demo passports (per-student folders)
+│   ├── marco/
+│   │   ├── passport.md                # The Student Passport — living, versioned, tagged
+│   │   ├── sessions/                  # Session capture packages land here
+│   │   └── packs/                     # Generated stakeholder views land here
+│   └── priya/
+│       ├── passport.md                # Second demo passport — contrasting profile
+│       ├── sessions/
+│       └── packs/
 └── examples/
-    └── marco-bakery-story.md          # Worked example: draft story + linter report
+    ├── marco-bakery-pack.md           # Worked example: full pack + linter report
+    └── marco-bakery-session.md        # Worked example: full session loop
 ```
 
 ## Key design principles
 
-1. **Describe, don't command.** Stories follow Carol Gray's Social Stories 10.2 methodology:
-   descriptive sentences ≥ 2× coaching sentences, first/third person only, literally accurate.
-2. **The dossier personalises, the professional approves.** Personalisation comes from the
-   worker's curated `profile.md`, not the teen's self-report.
-3. **The linter enforces the methodology** — sentence ratio, WH-question coverage, perspective,
-   literal language, positive framing, fact-grounding — and shows its work in a report the
-   reviewer can trust.
-4. **Local data stays local.** Dossiers live in local folders under WorkBuddy's sandboxed
-   execution. All demo data is fictional.
+1. **Observables, never inferences.** The capture layer emits what happened — quotes, counts,
+   timestamps — never how the student felt. No emotional inference, no attribution.
+2. **Human-in-the-loop review gate.** Nothing merges into the passport without the worker's
+   approval. Auto-commit is off by design.
+3. **One source of truth.** The Student Passport is the single artifact all views derive from.
+   Nobody re-types facts about the child.
+4. **Verifiable output.** Every document is linted against methodology, cross-document
+   consistency, and sensitivity rules — with visible proof the professional can audit.
+5. **Local-first files.** Passports and sessions live in the worker's authorized local folders;
+   prompts use pseudonyms; full identifiers stay local. All demo data is fictional.
 
 ## Why not just a chatbot?
 
-A professional *can* paste notes into Gemini and get a plausible story. What they cannot get:
+A professional *can* paste session notes into Gemini and get a plausible teacher guide. What
+they cannot get:
 
-- **An audit against the methodology.** Practitioner-made materials routinely drift from the
-  10.2 criteria; fidelity declines without ongoing support. The linter checks every draft and
-  shows pass/fix/flag per criterion.
-- **Longitudinal consistency.** The dossier + story library keep voice, scripts, reading level,
-  and facts consistent across months of materials, and recycle past achievements into applause.
-- **One brief → many students.** Batch mode produces per-student differentiated stories for a
-  whole intervention group from a single brief — in a chatbot, that means re-pasting every
-  dossier by hand.
+- **An audit** — every output is linted against methodology + consistency + sensitivity rules,
+  with visible proof. A chatbot gives you prose; CaseCraft gives you prose *and* an audit trail.
+- **A living passport** — one source of truth that accumulates across months, keeps voice,
+  scripts, and facts aligned, and follows the student through transitions. A chatbot starts
+  from zero every conversation.
+- **The loop** — sessions feed the passport without the professional re-typing history, and
+  stakeholder views re-render from a single approved delta. Generic chatbots don't accumulate.
 
 ## Installing in WorkBuddy
 
 Follow the WorkBuddy custom-skill doc (techpedia 144100, section 7):
 - Add the skill Markdown + templates under WorkBuddy's `skills/` directory.
-- Add `commands/socialstory.md` under its `commands/` directory.
+- Add `commands/session.md` and `commands/casecraft.md` under its `commands/` directory.
 - Authorise WorkBuddy to access the `casecraft/` folder.
 
 Then run, e.g.:
 
 ```
-/socialstory marco "First work-experience placement at Sunbeam Bakery next Tuesday 19 Aug,
+/session marco --goal="work experience: ask for help when unsure, no more than 2 prompts"
+```
+
+or
+
+```
+/casecraft marco "First work-experience placement at Sunbeam Bakery next Tuesday 19 Aug,
 9:00–15:30. Travel by MTR Jordan → Mong Kok. Supervisor is Mrs. Chan. Jobs: bagging rolls,
 labelling boxes. Kitchen is warm and mixers are loud."
 ```
