@@ -90,9 +90,11 @@ argument value to a file. Register it in WorkBuddy's `commands/` directory. Invo
 is written.
 **Fail if**: Command not recognised, or arguments not passed through.
 
-**Why this matters**: The professional's UX is `/socialstory marco "situation brief"` or
-`/bridge marco "new placement"`. If slash commands can't take arguments, the UX degrades to
-pasting instructions in natural language (still works, but less clean).
+**Why this matters**: The professional's UX is `/session marco --goal="…"` or
+`/casecraft marco "situation brief"` — and batch mode hangs off the same argument
+parsing (`/session batch … --students marco,priya`). If slash commands can't take
+arguments, the UX degrades to pasting instructions in natural language (still works,
+but less clean).
 
 ---
 
