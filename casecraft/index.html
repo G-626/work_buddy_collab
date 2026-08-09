@@ -395,28 +395,31 @@
     <h2>Built With</h2>
     <div class="tech-list">
       <span class="tech-tag">Tencent WorkBuddy (Custom Agent Skill)</span>
-      <span class="tech-tag">Markdown-defined skills + templates</span>
-      <span class="tech-tag">Carol Gray Social Stories 10.2 methodology</span>
-      <span class="tech-tag">Cross-document consistency linter</span>
-      <span class="tech-tag">Sensitivity leak check</span>
-      <span class="tech-tag">Freshness flagging</span>
-      <span class="tech-tag">Local file operations (sandboxed)</span>
-    </div>
-    <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--muted);">
-      Designed for pilot readiness: a real professional could install WorkBuddy, copy the skill files,
-      create a real passport (with pseudonymisation), and start using the loop with no code changes.
-    </p>
+            <span class="tech-tag">Markdown-defined skills + templates</span>
+            <span class="tech-tag">Movement Event Schema v1 (observables only)</span>
+            <span class="tech-tag">Carol Gray Social Stories 10.2 methodology</span>
+            <span class="tech-tag">Cross-document consistency linter</span>
+            <span class="tech-tag">Sensitivity leak check (blocking gate)</span>
+            <span class="tech-tag">Freshness flagging (30-day rule)</span>
+            <span class="tech-tag">Local file operations (sandboxed)</span>
+            <span class="tech-tag">PDF generation (capability verified)</span>
+          </div>
+          <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--muted);">
+            Demo capture is simulated (mock transcripts + movement-event streams). The real
+            capture engine runs on the worker's device behind a local MCP server — WorkBuddy
+            orchestrates, on-device Whisper transcribes, nothing leaves the device.
+          </p>
   </div>
 
   <!-- Roadmap -->
   <div class="section">
     <h2>Roadmap</h2>
     <ul class="roadmap">
-      <li><strong>Messenger delivery</strong> — post generated views into Telegram/Slack for the relevant stakeholder (WorkBuddy remote control)</li>
-      <li><strong>Employer Guide</strong> — workplace-facing document for older teens in work experience</li>
-      <li><strong>Teen co-authorship</strong> — a "my side" passport section the student co-edits (self-advocacy best practice)</li>
-      <li><strong>passport.html</strong> — readable, printable UI for families and teams</li>
-      <li><strong>PDF output</strong> — print-ready documents for sharing</li>
+      <li><strong>Automated delivery</strong> — scheduled freshness + weekly viewer packs pushed via WorkBuddy Automation &amp; Assistant (Slack/Telegram/WeCom…)</li>
+            <li><strong>Employer Guide</strong> — workplace-facing document for older teens in work experience</li>
+            <li><strong>Teen co-authorship</strong> — a "my side" passport section the student co-edits (self-advocacy best practice)</li>
+            <li><strong>passport.html</strong> — readable, printable UI for families and teams (WorkBuddy zero-code app)</li>
+            <li><strong>MCP capture engine</strong> — real MediaPipe stream on the worker device, served to WorkBuddy as a local MCP tool</li>
       <li><strong>Pilot with HK Children &amp; Youth Services</strong> — 2–3 social workers, 5 students, 4 weeks</li>
     </ul>
   </div>
