@@ -87,7 +87,26 @@ place. A report that respects the parent's time gets read.
   home parallel.
 - **What works**: home-feasible strategies only.
 
-## 8. Uncertainty rule
+## 8. Bilingual output (HK context)
+
+- **Default**: English. **If the professional asks, or the passport's Basics section
+  says the family reads Chinese** (e.g. "parent updates: plain English or Chinese"),
+  produce the Parent Report in **Traditional Chinese (繁體中文)** with English section
+  headings alongside, OR fully bilingual — the professional chooses at the command
+  line (e.g. `--lang=zh`, `--lang=bilingual`).
+- Use the HK-accepted terminology table (see `docs/therapy-report-research.md` §4):
+  e.g. 感覺統合 (sensory processing), 自我調節 (self-regulation), 社交溝通 (social
+  communication), 視覺流程表 (visual schedule). Prefer Hong Kong Traditional Chinese,
+  not Simplified.
+- The evidence table stays factual in either language; status words localise
+  (Progressing → 進展中 / Met → 已達標 / Needs attention → 需關注).
+- The "Same words at home" script must stay identical **in the language the child
+  actually hears at school** — do not translate the coping script into Chinese if the
+  child hears it in English at school. Flag the decision in the linter report.
+- The Teacher Guide and Social Story remain in the child's school language; only the
+  Parent Report localises. Bilingual is a parent-facing option, not a global setting.
+
+## 9. Uncertainty rule
 
 If a fact is unknown (e.g. whether the family has visited the venue before), either
 phrase it as typical ("Many families find it helpful to visit a new place before the

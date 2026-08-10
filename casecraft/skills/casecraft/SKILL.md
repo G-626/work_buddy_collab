@@ -16,6 +16,7 @@ structured, concrete, positive-first, and consistent across every document.
 |---|---|---|
 | Student ID | yes | Folder name under `students/` (e.g. `marco`) |
 | Situation brief | yes | Free text from the professional: **what** is happening, **when**, **where**, **who** is involved, **what the student will do**, and **what is known to be hard** |
+| Language (optional) | no | `--lang=en|zh|bilingual` — localises the Parent Report only (see `templates/parent-guide.md` §8). Default `en` |
 
 If the brief is missing any of these elements, do not silently guess — note the gap
 in the linter report as a question for the professional.

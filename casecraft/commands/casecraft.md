@@ -4,6 +4,7 @@
 
 ```
 /casecraft <student-id> "<situation brief>"
+/casecraft <student-id> "<situation brief>" --lang=bilingual
 /casecraft batch "<situation brief>" --students <id1,id2,...>
 ```
 
