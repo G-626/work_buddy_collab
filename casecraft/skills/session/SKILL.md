@@ -17,6 +17,15 @@ never merge anything into the passport without the worker's approval.
 | Session goal | yes | Free text: what the worker is observing for |
 | Capture package | yes | Folder `students/<id>/sessions/<YYYY-MM-DD>-<slug>/` containing `transcript.md` (session dialogue) and `capture.md` (Movement Event Stream per `docs/schemas/movement-events.md`) |
 
+## Dates: use the system date, always
+
+- All generated artifacts (session draft, review gate, passport stamps, views,
+  PDFs) are dated with **today's system date** — never a date copied from the
+  capture package or assumed. The session folder's date is factual data about when
+  the session happened: keep it in the session log, but every generated artifact
+  uses the system date.
+- If the system date is unavailable or unreliable, ask the worker — never guess.
+
 ## Pipeline
 
 ### Step 1 — Load the passport

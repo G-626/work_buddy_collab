@@ -2,7 +2,7 @@
 
 > **This is not a diagnostic or clinical document.** It describes what supports this student.
 > Curated by: K. Wong, School Social Worker.
-> Version: 1.0 | Created: 2026-07-20 | Last updated: 2026-07-20
+> Version: 1.1 | Created: 2026-07-20 | Last updated: 2026-08-10
 
 ---
 
@@ -36,6 +36,8 @@
 
 ## What works [open]
 
+- *Session note: Took the fact-checker role and used it — asked for the poster sources in writing*
+
 - **Private feedback** — written comments on work, or a quiet word after class, never in
   front of peers. Responds well, asks follow-up questions.
 - **Assigned roles in group work** — "You are the note-taker" works; "work together" does not.
@@ -54,6 +56,8 @@
 
 ## Goals (current) [team]
 
+*Contributing one idea in group work (assigned role)*
+
 1. Contribute one idea in a group setting, with a pre-assigned role, ≤ 2 prompts.
 2. Use a private help-seeking channel (email, after-class question) instead of struggling
    silently, ≥ 1 time per week.
@@ -61,13 +65,15 @@
 
 ## Patterns [team]
 
-*No patterns recorded yet. This section accumulates descriptive, correlational observations
-from approved sessions — movement-event counts aligned to context, trends over time.
-Never a verdict; surprises route to the worker as questions.*
+| context | event | count | trace |
+|---|---|---|---|
+| asking a question | gaze_speaker | 2 | 11:15, 11:38 |
+
+*Baseline observations — read with `templates/patterns.md`; reassess after ≥3 sessions.*
 
 ## Session log [team]
 
-*No sessions recorded yet. This section accumulates approved session summaries.*
+- **2026-08-09** — arts: Contribute one idea in a group setting, with a pre-assigned role, no more than 2 — MET. Approved by K. Wong, School Social Worker (observing; class taught by Ms. Liu). (report generated 2026-08-10)
 
 ## Clinical [clinical]
 
@@ -94,9 +100,9 @@ parent, teacher, or student-facing views.*
 | Basics | 2026-07-20 |
 | Communication profile | 2026-07-20 |
 | Triggers & sensory | 2026-07-20 |
-| What works | 2026-07-20 |
+| What works | 2026-08-10 |
 | Special interests | 2026-07-20 |
-| Goals | 2026-07-20 |
-| Patterns | — (no session yet) |
-| Session log | — (no session yet) |
+| Goals | 2026-08-10 |
+| Patterns | 2026-08-10 |
+| Session log | 2026-08-10 |
 | Clinical | — (never auto-stamped)

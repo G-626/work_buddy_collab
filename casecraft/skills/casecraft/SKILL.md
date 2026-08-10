@@ -21,6 +21,19 @@ structured, concrete, positive-first, and consistent across every document.
 If the brief is missing any of these elements, do not silently guess — note the gap
 in the linter report as a question for the professional.
 
+## Dates: use the system date, always
+
+- Every generated document, PDF, and pack folder is dated with **today's system
+  date** (the date the professional runs the command). Never assume, invent, or
+  copy a date from memory, from the brief, or from a previous run.
+- The session's own date (when the session actually happened) is factual data from
+  the capture package — record it in the session log, but the report date on the
+  documents is always the system date.
+- File naming is date-first: `YYYY-MM-DD-<student>-<doc>.pdf`, so a student's packs
+  sort chronologically and sessions can be compared over time.
+- If you cannot determine today's date reliably, ask the professional — never
+  guess a date.
+
 ## Passport section tags (read these — they control everything)
 
 Every passport section carries a sensitivity tag:

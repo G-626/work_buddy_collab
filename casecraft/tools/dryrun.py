@@ -480,7 +480,9 @@ def run_student(student: str, sdir: Path, sess_dir: Path) -> dict:
     transcript = sess_dir / "transcript.md"
     capture = sess_dir / "capture.md"
     m = re.search(r"(\d{4}-\d{2}-\d{2})", sess_dir.name)
-    date_s = m.group(1) if m else "2025-08-19"
+    session_date = m.group(1) if m else "2025-08-19"
+    # SYSTEM date for all generated artifacts — never assume a date.
+    date_s = datetime.now().strftime("%Y-%m-%d")
 
     pp = parse_passport(passport)
     tr = parse_transcript(transcript)
@@ -532,8 +534,11 @@ Decision: **APPROVED with one edit**
 
     # --- Step 6: passport delta --------------------------------------------
     label = re.sub(r"^\d{4}-\d{2}-\d{2}-?", "", sess_dir.name).replace("-", " ").replace("_", " ")
-    log_entry = (f"- **{date_s}** — {label}: "
-                 f"{tr['goal'][:80]} — {tr['assess']}. Approved by {tr['worker']}.")
+    # The session log records when the session actually happened (factual data
+    # from the capture package); every generated artifact uses the system date.
+    log_entry = (f"- **{session_date}** — {label}: "
+                 f"{tr['goal'][:80]} — {tr['assess']}. Approved by {tr['worker']}. "
+                 f"(report generated {date_s})")
     p_tbl = "\n".join(pattern_rows(evs))
     body, newver = render_passport(passport, date_s, p_tbl, log_entry,
                                    notes["progress"][0][0], notes["well"][0])

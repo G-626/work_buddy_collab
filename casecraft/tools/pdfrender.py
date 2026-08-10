@@ -2,10 +2,15 @@
 """
 CaseCraft styled PDF renderer (Level-1, fpdf2).
 
-Renders the pack's `.md` views into professional-looking PDFs with visual
-hierarchy: header band, colour-coded status badges, accent-bar section
-headings, callout boxes for shared scripts, zebra tables, and a footer with
-page numbers + "Draft for professional review" watermark note.
+Design rules (v2):
+- ONE accent colour (deep blue). Hierarchy is carried by font weight/size
+  (band title > H1 > section H2 > body > muted notes), not by colour.
+- Every text frame uses MIRRORED padding: text is vertically centred inside
+  its cell/box, so top padding == bottom padding (nothing clashes with the
+  next cell).
+- Status values (Met / Progressing / Needs attention / PASS / FAIL) are
+  emphasised with bold + the accent colour — never a status colour.
+- Dated by the SYSTEM date supplied by the caller (never assumed inside).
 
 Markdown handled: `# title`, `## section`, `| table |`, `> callout`,
 `- bullets`, `**label:** paragraphs`, `*italics*`, plain paragraphs.
@@ -14,7 +19,7 @@ Usage:
     from pdfrender import render_markdown_to_pdf
     render_markdown_to_pdf("view.md", "out.pdf",
                            doc_type="Parent Report", student="Marco L.",
-                           date_s="2025-08-19")
+                           date_s="2026-08-10")
 """
 
 from __future__ import annotations
@@ -23,20 +28,12 @@ import re
 from pathlib import Path
 
 # ------------------------------------------------------------------ palette
-INK = (30, 42, 56)          # near-black body text
-MUTED = (110, 120, 130)     # secondary text
-PRIMARY = (31, 78, 121)     # deep blue — headers, bands
-ACCENT = (208, 121, 36)     # amber — focus callouts
-LIGHT_BAND = (230, 240, 248)   # page-1 header band fill
-LIGHT_ROW = (245, 248, 251)    # zebra row fill
-OK_GREEN = (22, 128, 72)
-OK_GREEN_BG = (226, 242, 232)
-BLUE = (25, 110, 170)
-BLUE_BG = (227, 240, 250)
-WARN = (176, 108, 24)
-WARN_BG = (252, 243, 224)
-BAD_RED = (168, 44, 44)
-BAD_RED_BG = (252, 230, 230)
+# Single accent colour; everything else is ink/gray/white.
+PRIMARY = (31, 78, 121)      # the ONE accent — bands, bars, header rows, status text
+INK = (35, 42, 50)           # body text (near-black)
+MUTED = (125, 133, 140)      # secondary text (notes, footer)
+WHITE = (255, 255, 255)
+BAND_SUB = (200, 216, 232)   # light blue-grey text on the primary band (still the accent family)
 
 FONT_CANDIDATES = [
     ("C:/Windows/Fonts/calibri.ttf", "C:/Windows/Fonts/calibrib.ttf"),
@@ -48,25 +45,14 @@ FONT_CANDIDATES = [
 CJK_CANDIDATES = ["C:/Windows/Fonts/msyh.ttc",
                   "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"]
 
-STATUS_COLORS = {
-    "met": (OK_GREEN, OK_GREEN_BG),
-    "progressing": (BLUE, BLUE_BG),
-    "needs attention": (WARN, WARN_BG),
-    "needs attention / review": (WARN, WARN_BG),
-    "pass": (OK_GREEN, OK_GREEN_BG),
-    "fixed": (BLUE, BLUE_BG),
-    "flag": (WARN, WARN_BG),
-    "fail": (BAD_RED, BAD_RED_BG),
-    "blocked": (BAD_RED, BAD_RED_BG),
-}
+# Status words emphasised with bold + accent (no status colours).
+STATUS_WORDS = ["met", "progressing", "needs attention", "pass", "fixed",
+                "flag", "fail", "blocked"]
 
 
-def _status_style(text: str) -> tuple | None:
+def _is_status(text: str) -> bool:
     t = text.strip().lower()
-    for key in STATUS_COLORS:
-        if t == key or t.startswith(key):
-            return STATUS_COLORS[key]
-    return None
+    return any(t == s or t.startswith(s) for s in STATUS_WORDS)
 
 
 def _strip_inline(md: str) -> str:
@@ -130,79 +116,94 @@ class StyledPDF:
     def _space(self, h: float = 2.5):
         self.pdf.ln(h)
 
+    def _wrap_lines(self, text: str, avail: float, style: str = "",
+                    fs: float = 10.5) -> int:
+        """Exact wrapped-line count for text within avail width."""
+        self.pdf.set_font("Body", style, fs)
+        words = text.split()
+        if not words:
+            return 1
+        lines, cur = 1, words[0]
+        for word in words[1:]:
+            trial = f"{cur} {word}"
+            if self.pdf.get_string_width(trial) <= avail:
+                cur = trial
+            else:
+                lines += 1
+                cur = word
+        return lines
+
     # ------------------------------------------------------------- header
     def _add_header_band(self):
         self.pdf.add_page()
-        # band
         self._fill(PRIMARY)
         self.pdf.rect(0, 0, 210, 26, style="F")
         self.pdf.set_xy(14, 7)
         self.pdf.set_font("Body", "B", 15)
-        self._color((255, 255, 255))
+        self._color(WHITE)
         self.pdf.cell(0, 8, self.doc_type, new_x="LMARGIN", new_y="NEXT")
         self.pdf.set_xy(14, 15.5)
         self.pdf.set_font("Body", "", 10)
-        self._color((205, 222, 240))
-        who = f"{self.student}  ·  {self.date_s}"
-        self.pdf.cell(0, 5, who, new_x="LMARGIN", new_y="NEXT")
+        self._color(BAND_SUB)
+        self.pdf.cell(0, 5, f"{self.student}  ·  {self.date_s}",
+                      new_x="LMARGIN", new_y="NEXT")
         self.pdf.set_y(30)
 
     # ------------------------------------------------------------- blocks
     def title(self, md: str):
-        # The header band already carries doc type + student + date — the
-        # markdown H1 is rendered as a muted subtitle to avoid duplication.
         self._write(_strip_inline(md), size=13, style="B", color=PRIMARY, lh=6)
         self._space(2.5)
 
     def section(self, md: str):
         txt = _strip_inline(md)
-        # accent bar
         y = self.pdf.get_y()
-        self._fill(ACCENT)
+        self._fill(PRIMARY)
         self.pdf.rect(10, y + 0.6, 1.6, 6.4, style="F")
         self.pdf.set_x(14)
         self._write(txt, size=12, style="B", color=PRIMARY, lh=6.2)
         self._space(1.6)
 
     def callout(self, lines: list[str]):
-        """Render a `>` blockquote as a tinted callout box."""
+        """`>` blockquote as a single-accent callout box (mirrored padding)."""
         body = " ".join(_strip_inline(l.lstrip(">")).strip() for l in lines)
         if not body:
             return
-        self._space(0.5)
         x0, w = 12, 186
-        # measure height
-        self.pdf.set_font("Body", "", 10.5)
-        lines_est = max(1, int(self.pdf.get_string_width(body) / (w - 18)) + 1)
-        h = lines_est * 5.0 + 7
+        inner = w - 14
+        label_h = 4.6
+        pad_top = 3.5
+        gap = 0.8
+        pad_bottom = 3.5
+        body_lh = 5.0
+        n = self._wrap_lines(body, inner, fs=10.5)
+        body_h = n * body_lh
+        h = pad_top + label_h + gap + body_h + pad_bottom
         y0 = self.pdf.get_y()
         if y0 + h > 275:
             self.pdf.add_page()
             y0 = self.pdf.get_y()
-        self._fill(LIGHT_BAND)
-        self._draw(ACCENT)
+        self._fill(WHITE)
+        self._draw(PRIMARY)
         self.pdf.rect(x0, y0, w, h, style="DF")
-        self.pdf.set_xy(x0 + 7, y0 + 3.5)
+        # label (top, mirrored by bottom pad)
+        self.pdf.set_xy(x0 + 7, y0 + pad_top)
         self.pdf.set_font("Body", "B", 9.5)
-        self._color(ACCENT)
-        self.pdf.cell(0, 4.6, "SAME WORDS — SAY IT EXACTLY", new_x="LMARGIN", new_y="NEXT")
-        self.pdf.set_xy(x0 + 7, y0 + 8.6)
+        self._color(PRIMARY)
+        self.pdf.cell(0, label_h, "SAME WORDS — SAY IT EXACTLY",
+                      new_x="LMARGIN", new_y="NEXT")
+        # body
+        self.pdf.set_xy(x0 + 7, y0 + pad_top + label_h + gap)
         self.pdf.set_font("Body", "", 10.5)
         self._color(INK)
-        self.pdf.multi_cell(w - 14, 5.0, body, new_x="LMARGIN", new_y="NEXT")
+        self.pdf.multi_cell(inner, body_lh, body, new_x="LMARGIN", new_y="NEXT")
         self.pdf.set_y(y0 + h + 2)
 
     def table(self, rows: list[list[str]]):
-        """Render a markdown table with header + zebra + status colours.
-
-        Cells use multi_cell so text wraps; row height is computed from the
-        tallest wrapped cell. Status cells (Met/Progressing/Needs attention/
-        PASS/FAIL) get a coloured fill + bold centred text.
-        """
+        """Markdown table — header row in accent, body wrapped with mirrored
+        vertical padding, status emphasised via bold + accent text."""
         rows = [[_strip_inline(c).strip() for c in r] for r in rows]
         if not rows:
             return
-        # drop markdown separator row (|---|---|)
         rows = [r for r in rows if not all(re.fullmatch(r":?-{2,}:?", c) for c in r)]
         header, data = rows[0], rows[1:]
         ncols = len(header)
@@ -210,79 +211,62 @@ class StyledPDF:
             return
         page_w, margin = 210, 10
         usable = page_w - 2 * margin
-        # Weight columns: give the middle (evidence) column more room.
         if ncols == 3:
             widths = [usable * 0.32, usable * 0.40, usable * 0.28]
         elif ncols == 4:
             widths = [usable * 0.30, usable * 0.36, usable * 0.18, usable * 0.16]
         else:
             widths = [usable / ncols] * ncols
-        pad, line_h, fs = 2.2, 4.4, 9.5
+        pad, line_h, fs = 2.6, 4.4, 9.5
 
-        def wrap_count(text: str, w: float, style: str = "") -> int:
-            """Approximate wrapped line count for text in a cell of width w."""
-            self.pdf.set_font("Body", style, fs)
-            avail = max(w - 2 * pad - 2, 8)
-            words = text.split()
-            if not words:
-                return 1
-            lines, cur = 1, words[0]
-            for word in words[1:]:
-                trial = f"{cur} {word}"
-                if self.pdf.get_string_width(trial) <= avail:
-                    cur = trial
-                else:
-                    lines += 1
-                    cur = word
-            return lines
+        def cell_lines(text: str, w: float, bold: bool = False) -> int:
+            return self._wrap_lines(text, w - 2 * pad - 2, "B" if bold else "", fs)
 
-        def cell_height(row: list[str], style_row: bool = False) -> float:
+        def cell_height(row: list[str], bold: bool = False) -> float:
             h = 0.0
             for ci, cval in enumerate(row):
-                st = "B" if (style_row and _status_style(cval)) else ""
-                n = wrap_count(cval, widths[ci], st)
-                h = max(h, n * line_h + 2 * pad)
-            return max(h, 7.0)
+                n = cell_lines(cval, widths[ci], bold or _is_status(cval))
+                h = max(h, n * line_h + 2 * pad)  # mirrored pad top+bottom
+            return h
 
-        def draw_row(row: list[str], y: float, h: float, is_header: bool,
-                     is_status_row: bool):
+        def draw_row(row: list[str], y: float, h: float, is_header: bool):
             x = margin
             for ci, cval in enumerate(row):
-                style = _status_style(cval)
                 if is_header:
-                    fill, txt_color, fstyle = PRIMARY, (255, 255, 255), "B"
-                elif style:
-                    fill, txt_color, fstyle = style[1], style[0], "B"
+                    fill, txt_color, fstyle = PRIMARY, WHITE, "B"
+                    align = "C"
                 else:
-                    fill = LIGHT_ROW if (is_status_row and is_status_row) else (255, 255, 255)
-                    txt_color, fstyle = INK, ""
+                    fill, txt_color = WHITE, INK
+                    fstyle = "B" if _is_status(cval) else ""
+                    txt_color = PRIMARY if _is_status(cval) else INK
+                    align = "C" if _is_status(cval) else "L"
                 self._fill(fill)
                 self.pdf.rect(x, y, widths[ci], h, style="F")
+                n = cell_lines(cval, widths[ci], fstyle == "B")
+                # mirrored vertical centering
+                y_text = y + (h - n * line_h) / 2
                 self.pdf.set_font("Body", fstyle, fs)
                 self._color(txt_color)
-                align = "C" if (is_header or style) else "L"
-                self.pdf.set_xy(x + pad, y + pad - 0.4)
-                self.pdf.multi_cell(widths[ci] - 2 * pad, line_h, cval, align=align,
-                                    new_x="LMARGIN", new_y="NEXT")
+                self.pdf.set_xy(x + pad, y_text)
+                self.pdf.multi_cell(widths[ci] - 2 * pad, line_h, cval,
+                                    align=align, new_x="LMARGIN", new_y="NEXT")
                 x += widths[ci]
 
         self._space(0.5)
-        # header
         y = self.pdf.get_y()
-        h = cell_height(header, style_row=False)
+        h = cell_height(header, bold=True)
         if y + h > 275:
             self.pdf.add_page()
             y = self.pdf.get_y()
-        draw_row(header, y, h, is_header=True, is_status_row=False)
+        draw_row(header, y, h, is_header=True)
         self.pdf.set_y(y + h)
-        # data rows
-        for ri, row in enumerate(data):
+        for row in data:
             y = self.pdf.get_y()
-            h = cell_height(row, style_row=True)
+            h = cell_height(row)
             if y + h > 275:
                 self.pdf.add_page()
                 y = self.pdf.get_y()
-            draw_row(row, y, h, is_header=False, is_status_row=(ri % 2 == 1))
+            draw_row(row, y, h, is_header=False)
             self.pdf.set_y(y + h)
         self._space(2)
 
@@ -291,7 +275,7 @@ class StyledPDF:
             marker = f"{i+1}. " if numbered else "•  "
             txt = _strip_inline(item)
             self.pdf.set_font("Body", "", 10.5)
-            self._color(ACCENT if not numbered else PRIMARY)
+            self._color(PRIMARY)
             self.pdf.set_x(13)
             self.pdf.cell(7, 4.8, marker, new_x="END")
             self.pdf.set_x(20)
@@ -355,8 +339,6 @@ def render_markdown_to_pdf(md_path: Path, out_path: Path, doc_type: str,
     sp = StyledPDF(doc_type, student, date_s, situation)
     if not sp._font_ok:
         return None
-    # Best-effort CJK fallback — only load when content actually has 中文,
-    # so English-only packs don't trigger the TTC subsetter noise.
     if re.search(r"[\u4e00-\u9fff]", Path(md_path).read_text(encoding="utf-8")):
         sp._cjk()
 
@@ -393,7 +375,6 @@ def render_markdown_to_pdf(md_path: Path, out_path: Path, doc_type: str,
         ln = raw.strip()
         i += 1
 
-        # table rows
         if ln.startswith("|") and ln.endswith("|"):
             if not in_table:
                 flush_callout(); flush_list()
@@ -404,7 +385,6 @@ def render_markdown_to_pdf(md_path: Path, out_path: Path, doc_type: str,
             continue
         if in_table:
             flush_table()
-        # callout
         if ln.startswith(">"):
             if not in_callout:
                 flush_list()
@@ -414,7 +394,6 @@ def render_markdown_to_pdf(md_path: Path, out_path: Path, doc_type: str,
             continue
         if in_callout:
             flush_callout()
-        # list
         m = re.match(r"^(?:(\d+)\.|[-•])\s+(.*)$", ln)
         if m:
             if not in_list:
@@ -425,7 +404,6 @@ def render_markdown_to_pdf(md_path: Path, out_path: Path, doc_type: str,
             continue
         if in_list:
             flush_list()
-        # headings
         if ln.startswith("# "):
             sp.title(ln[2:])
             continue
@@ -434,7 +412,6 @@ def render_markdown_to_pdf(md_path: Path, out_path: Path, doc_type: str,
             continue
         if ln == "":
             continue
-        # paragraph
         sp.para(ln)
 
     flush_table(); flush_callout(); flush_list()
