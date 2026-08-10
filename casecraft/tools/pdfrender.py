@@ -193,7 +193,12 @@ class StyledPDF:
         self.pdf.set_y(y0 + h + 2)
 
     def table(self, rows: list[list[str]]):
-        """Render a markdown table with header + zebra + status colours."""
+        """Render a markdown table with header + zebra + status colours.
+
+        Cells use multi_cell so text wraps; row height is computed from the
+        tallest wrapped cell. Status cells (Met/Progressing/Needs attention/
+        PASS/FAIL) get a coloured fill + bold centred text.
+        """
         rows = [[_strip_inline(c).strip() for c in r] for r in rows]
         if not rows:
             return
@@ -203,54 +208,82 @@ class StyledPDF:
         ncols = len(header)
         if ncols == 0:
             return
-        page_w, margin, gap = 210, 10, 2
+        page_w, margin = 210, 10
         usable = page_w - 2 * margin
-        # weight: status column narrower
-        widths = [usable / ncols] * ncols
-        # find likely status column (last col in progress tables)
+        # Weight columns: give the middle (evidence) column more room.
+        if ncols == 3:
+            widths = [usable * 0.32, usable * 0.40, usable * 0.28]
+        elif ncols == 4:
+            widths = [usable * 0.30, usable * 0.36, usable * 0.18, usable * 0.16]
+        else:
+            widths = [usable / ncols] * ncols
+        pad, line_h, fs = 2.2, 4.4, 9.5
+
+        def wrap_count(text: str, w: float, style: str = "") -> int:
+            """Approximate wrapped line count for text in a cell of width w."""
+            self.pdf.set_font("Body", style, fs)
+            avail = max(w - 2 * pad - 2, 8)
+            words = text.split()
+            if not words:
+                return 1
+            lines, cur = 1, words[0]
+            for word in words[1:]:
+                trial = f"{cur} {word}"
+                if self.pdf.get_string_width(trial) <= avail:
+                    cur = trial
+                else:
+                    lines += 1
+                    cur = word
+            return lines
+
+        def cell_height(row: list[str], style_row: bool = False) -> float:
+            h = 0.0
+            for ci, cval in enumerate(row):
+                st = "B" if (style_row and _status_style(cval)) else ""
+                n = wrap_count(cval, widths[ci], st)
+                h = max(h, n * line_h + 2 * pad)
+            return max(h, 7.0)
+
+        def draw_row(row: list[str], y: float, h: float, is_header: bool,
+                     is_status_row: bool):
+            x = margin
+            for ci, cval in enumerate(row):
+                style = _status_style(cval)
+                if is_header:
+                    fill, txt_color, fstyle = PRIMARY, (255, 255, 255), "B"
+                elif style:
+                    fill, txt_color, fstyle = style[1], style[0], "B"
+                else:
+                    fill = LIGHT_ROW if (is_status_row and is_status_row) else (255, 255, 255)
+                    txt_color, fstyle = INK, ""
+                self._fill(fill)
+                self.pdf.rect(x, y, widths[ci], h, style="F")
+                self.pdf.set_font("Body", fstyle, fs)
+                self._color(txt_color)
+                align = "C" if (is_header or style) else "L"
+                self.pdf.set_xy(x + pad, y + pad - 0.4)
+                self.pdf.multi_cell(widths[ci] - 2 * pad, line_h, cval, align=align,
+                                    new_x="LMARGIN", new_y="NEXT")
+                x += widths[ci]
+
         self._space(0.5)
-        y0 = self.pdf.get_y()
-        row_h = 7.0
         # header
-        self._fill(PRIMARY)
-        x = margin
-        self.pdf.set_font("Body", "B", 9.5)
-        self._color((255, 255, 255))
-        self.pdf.set_xy(x, y0)
-        for i, htxt in enumerate(header):
-            self.pdf.cell(widths[i] - gap, row_h, htxt, fill=True, align="C")
-            x += widths[i]
-        self.pdf.set_y(y0 + row_h)
+        y = self.pdf.get_y()
+        h = cell_height(header, style_row=False)
+        if y + h > 275:
+            self.pdf.add_page()
+            y = self.pdf.get_y()
+        draw_row(header, y, h, is_header=True, is_status_row=False)
+        self.pdf.set_y(y + h)
         # data rows
         for ri, row in enumerate(data):
-            if self.pdf.get_y() > 268:
-                self.pdf.add_page()
             y = self.pdf.get_y()
-            # compute row height by longest wrapped cell
-            self.pdf.set_font("Body", "", 9.5)
-            cell_h = row_h
-            for ci, cval in enumerate(row):
-                wcell = widths[ci] - gap - 4
-                n = max(1, int(self.pdf.get_string_width(cval) / max(wcell, 1)) + 1)
-                cell_h = max(cell_h, n * 4.6 + 3)
-            if ri % 2 == 1:
-                self._fill(LIGHT_ROW)
-            else:
-                self._fill((255, 255, 255))
-            self.pdf.set_xy(margin, y)
-            for ci, cval in enumerate(row):
-                fill = (255, 255, 255)
-                if ri % 2 == 1:
-                    fill = LIGHT_ROW
-                style = _status_style(cval)
-                if style:
-                    fill = style[1]
-                self._fill(fill)
-                self.pdf.set_font("Body", "B" if style else "", 9.5)
-                self._color(style[0] if style else INK)
-                self.pdf.cell(widths[ci] - gap, cell_h, cval, fill=True,
-                              align="C" if style else "L", border=0)
-            self.pdf.set_y(y + cell_h)
+            h = cell_height(row, style_row=True)
+            if y + h > 275:
+                self.pdf.add_page()
+                y = self.pdf.get_y()
+            draw_row(row, y, h, is_header=False, is_status_row=(ri % 2 == 1))
+            self.pdf.set_y(y + h)
         self._space(2)
 
     def bullets(self, items: list[str], numbered: bool = False):
