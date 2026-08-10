@@ -415,70 +415,59 @@ def drill(student: str, name: str, views_dir: Path) -> dict:
 
 # ---------------------------------------------------------------- PDF export
 
-def export_pdf(md_path: Path, out_dir: Path) -> Path | None:
-    """Render one .md file to PDF via fpdf2 if available; else return None."""
+DOC_TYPES = {
+    "teacher-guide.md": "Teacher Guide",
+    "parent-guide.md": "Parent Report",
+    "social-story.md": "Social Story",
+    "therapist-summary.md": "Therapist Summary",
+    "05-linter-report.md": "Linter Report",
+    "01-session-draft.md": "Session Draft",
+    "02-review-gate.md": "Review Gate",
+}
+
+
+def export_pdf(md_path: Path, out_dir: Path, student: str, date_s: str,
+               situation: str = "") -> Path | None:
+    """Render one .md view to a styled, dated PDF via pdfrender.
+
+    Filename: <YYYY-MM-DD>-<student>-<doc-type>.pdf — date-first so packs
+    sort chronologically and sessions can be compared over time.
+    """
+    sys.path.insert(0, str(ROOT / "tools"))
     try:
-        from fpdf import FPDF
+        from pdfrender import render_markdown_to_pdf
     except ImportError:
         return None
-    txt = md_path.read_text(encoding="utf-8")
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    # Use a Unicode-capable TTF so em-dashes and CJK-safe punctuation render.
-    font_ok = False
-    for cand, cand_b in (("C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/arialbd.ttf"),
-                         ("C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/segoeuib.ttf"),
-                         ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-                          "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")):
-        if Path(cand).is_file():
-            try:
-                pdf.add_font("Body", "", cand)
-                if Path(cand_b).is_file():
-                    pdf.add_font("Body", "B", cand_b)
-                pdf.set_font("Body", "", 11)
-                font_ok = True
-                break
-            except Exception:
-                continue
-    if not font_ok:
-        return None  # no Unicode font — skip PDF rather than emit garbage
-    for ln in txt.splitlines():
-        if ln.startswith("# "):
-            pdf.set_font("Body", "B", 14)
-            pdf.multi_cell(0, 8, ln[2:].strip(), new_x="LMARGIN", new_y="NEXT")
-            pdf.set_font("Body", "", 11)
-        elif ln.startswith("## "):
-            pdf.set_font("Body", "B", 12)
-            pdf.multi_cell(0, 7, ln[3:].strip(), new_x="LMARGIN", new_y="NEXT")
-            pdf.set_font("Body", "", 11)
-        elif ln.startswith("| ") and "|" in ln[2:]:
-            cells = [c.strip() for c in ln.strip("|").split("|")]
-            pdf.cell(0, 6, " | ".join(cells), border=0, new_x="LMARGIN", new_y="NEXT")
-        elif ln.strip().startswith(">"):
-            pdf.set_text_color(80, 80, 80)
-            pdf.multi_cell(0, 6, ln.strip().lstrip(">").strip(), new_x="LMARGIN", new_y="NEXT")
-            pdf.set_text_color(0, 0, 0)
-        elif ln.strip() == "":
-            pdf.ln(3)
-        else:
-            pdf.multi_cell(0, 6, ln, new_x="LMARGIN", new_y="NEXT")
-    out = out_dir / (md_path.stem + ".pdf")
-    pdf.output(str(out))
-    return out
+    doc_type = DOC_TYPES.get(md_path.name, md_path.stem.replace("-", " ").title())
+    stem = md_path.stem
+    if stem.startswith("05-"):
+        stem = "linter-report"
+    elif stem.startswith("01-"):
+        stem = "session-draft"
+    elif stem.startswith("02-"):
+        stem = "review-gate"
+    out = out_dir / f"{date_s}-{student}-{stem}.pdf"
+    return render_markdown_to_pdf(md_path, out, doc_type,
+                                  student_title(student), date_s, situation)
 
 
-def export_all_pdfs(views_dir: Path, extra: list[Path]) -> list[str]:
-    """Export every .md view to PDF; returns list of PDF paths created."""
+def student_title(folder: str) -> str:
+    titles = {"marco": "Marco L.", "priya": "Priya S."}
+    return titles.get(folder, folder.title())
+
+
+def export_all_pdfs(views_dir: Path, extra: list[Path], student: str,
+                    date_s: str, situation: str = "") -> list[str]:
+    """Export every .md view to a dated PDF; returns list of PDF paths."""
     made = []
     for md in sorted(views_dir.glob("*.md")):
         if md.name.startswith("leak-drill"):
             continue
-        p = export_pdf(md, views_dir)
+        p = export_pdf(md, views_dir, student, date_s, situation)
         if p:
             made.append(str(p))
     for md in extra:
-        p = export_pdf(md, views_dir)
+        p = export_pdf(md, views_dir, student, date_s, situation)
         if p:
             made.append(str(p))
     return made
@@ -582,7 +571,8 @@ Decision: **APPROVED with one edit**
     (out / "05-linter-report.md").write_text(report, encoding="utf-8")
 
     # --- Step 8: PDF export (optional) --------------------------------------
-    pdfs = export_all_pdfs(views_dir, [out / "05-linter-report.md"])
+    pdfs = export_all_pdfs(views_dir, [out / "05-linter-report.md"],
+                           student, date_s, tr["goal"])
     pdf_note = f" ({len(pdfs)} PDFs)" if pdfs else " (PDF export: fpdf2 not installed)"
 
     (out / "summary.json").write_text(json.dumps({
