@@ -2,7 +2,7 @@
 
 > **This is not a diagnostic or clinical document.** It describes what supports this student.
 > Curated by: K. Wong, School Social Worker.
-> Version: 1.1 | Created: 2026-07-20 | Last updated: 2026-08-10
+> Version: 1.1 | Created: 2026-07-20 | Last updated: 2026-08-11
 
 ---
 
@@ -73,7 +73,7 @@
 
 ## Session log [team]
 
-- **2026-08-09** — arts: Contribute one idea in a group setting, with a pre-assigned role, no more than 2 — MET. Approved by K. Wong, School Social Worker (observing; class taught by Ms. Liu). (report generated 2026-08-10)
+- **2026-08-09** — arts: Contribute one idea in a group setting, with a pre-assigned role, no more than 2 — MET. Approved by K. Wong, School Social Worker (observing; class taught by Ms. Liu). (report generated 2026-08-11)
 
 ## Clinical [clinical]
 
@@ -100,9 +100,9 @@ parent, teacher, or student-facing views.*
 | Basics | 2026-07-20 |
 | Communication profile | 2026-07-20 |
 | Triggers & sensory | 2026-07-20 |
-| What works | 2026-08-10 |
+| What works | 2026-08-11 |
 | Special interests | 2026-07-20 |
-| Goals | 2026-08-10 |
-| Patterns | 2026-08-10 |
-| Session log | 2026-08-10 |
+| Goals | 2026-08-11 |
+| Patterns | 2026-08-11 |
+| Session log | 2026-08-11 |
 | Clinical | — (never auto-stamped)

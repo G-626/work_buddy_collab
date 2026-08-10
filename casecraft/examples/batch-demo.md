@@ -29,9 +29,9 @@ own review gate, its own passport delta.)
 ## Result: both passports v1.0 → v1.1
 
 - Marco: Goal 1 progress noted; What works (ear-defender self-initiation); Session log;
-  Patterns (bakery baseline) — all stamped 2025-08-19.
+  Patterns (bakery baseline) — all stamped 2026-08-10.
 - Priya: Goal 1 progress noted; What works (role assignment works as passport predicted);
-  Session log; Patterns (baseline 1/3) — stamped 2025-08-21.
+  Session log; Patterns (baseline 1/3) — stamped 2026-08-10.
 
 Views regenerated: 3 per student (Teacher Guide, Parent Guide, Social Story) — 6
 documents, each linter-checked (incl. both leak checks: PASS).

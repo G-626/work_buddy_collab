@@ -1,6 +1,6 @@
-# Social Story — Priya S. (FICTIONAL DEMO DATA) (2026-08-10)
+# Social Story — Priya S. (FICTIONAL DEMO DATA) (2026-08-11)
 
-The art room has one big table. Everyone has a job.
+Priya's art class has one big table. Everyone has a job.
 
 When the class is not sure what to do next, they can ask: "What should I do next?"
 

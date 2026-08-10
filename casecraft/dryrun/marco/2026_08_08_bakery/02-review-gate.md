@@ -1,4 +1,4 @@
-# Review gate — 2026-08-10
+# Review gate — 2026-08-11
 Approver: K. Wong, School Social Worker
 Decision: **APPROVED with one edit**
 - Q1 edit: "Pauses occurred between task steps during the session; record in

@@ -1,11 +1,9 @@
-# Therapist Summary — Marco L. (FICTIONAL DEMO DATA) (2026-08-10)
+# Therapist Summary — Marco L. (FICTIONAL DEMO DATA) (2026-08-11)
 
 *Working document for the professional team — not for family distribution.*
 
 ## Relevant passport summary
-Communication: literal, precise; does not ask for help spontaneously — needs explicit
-permission scripts. Triggers: loud machine noise, transitions to unfamiliar places.
-What works: advance preview, written steps, ear support, scripts.
+Communication: literal, precise; does not ask for help spontaneously — needs explicit permission scripts. Triggers: loud machine noise, transitions to unfamiliar places. What works: advance preview, written steps, ear support, scripts.
 
 ## Goal progress
 | Goal | Evidence this session | Status | Recommended next target |
@@ -20,11 +18,10 @@ Baseline observations (descriptive, correlational — never a verdict). Reassess
 ≥3 sessions. See passport Patterns section for the event table.
 
 ## Session log reference
-Session 2026-08-10 — Ask for help when unsure, no more than 2 prompts — outcome MET. Approved by K. Wong, School Social Worker.
+Session 2026-08-11 — Ask for help when unsure, no more than 2 prompts — outcome MET. Approved by K. Wong, School Social Worker.
 
 ## Open questions for the team
-- Confirm whether the ~45 s and ~30 s pauses correlate with step-transition timing
-  across sessions, or with something else in the environment.
+- Confirm whether the ~45 s and ~30 s pauses correlate with step-transition timing across sessions, or with something else in the environment.
 - Validate the self-initiated regulation event (10:15) against the transcript line.
 
 ## Recommended next step

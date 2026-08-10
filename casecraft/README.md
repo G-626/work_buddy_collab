@@ -1,8 +1,8 @@
 # CaseCraft — Coordinated Support Pack Skill (Hackathon Scaffold)
 
 A WorkBuddy Custom Agent Skill that generates a **Coordinated Support Pack** — a set of
-audience-specific documents (Teacher Guide, Parent Guide, optional Social Story) from one
-Student Dossier and one situation brief, kept consistent with each other by cross-document
+audience-specific documents (Teacher Guide, Parent Report, optional Social Story) from one
+Student Passport and one situation brief, kept consistent with each other by cross-document
 linting. The operator is a **professional** (social worker, therapist, SEN teacher) — never
 the teen. Every output is a **draft for professional review**.
 
@@ -23,10 +23,10 @@ casecraft/
 │       ├── SKILL.md                   # Pack generation: passport → views → lint → save
 │       └── templates/
 │           ├── teacher-guide.md       # Teacher Guide generation rules
-│           ├── parent-guide.md        # Parent Guide generation rules
+│           ├── parent-guide.md        # Parent Report generation rules
 │           ├── social-story.md        # Social Story generation rules (Carol Gray 10.2)
 │           ├── linter-teacher-guide.md    # Teacher Guide linter checks
-│           ├── linter-parent-guide.md     # Parent Guide linter checks
+│           ├── linter-parent-guide.md     # Parent Report linter checks
 │           ├── linter-social-story.md     # Social Story linter checks (10.2 + cross-doc)
 │           └── linter-sensitivity-leak.md # Sensitivity leak check (blocking)
 ├── students/                          # Fictional demo passports (per-student folders)
