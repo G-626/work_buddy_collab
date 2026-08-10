@@ -7,11 +7,13 @@ Runs the full agent loop from skills/session/SKILL.md against the repo's own
 
     load passport -> load capture package -> extract observables ->
     draft session summary -> review gate (simulated worker approval) ->
-    passport delta (v1.0 -> v1.1) -> regenerate views ->
-    linters (sensitivity leak, freshness, cross-doc consistency) ->
+    passport delta (v1.0 -> v1.1) -> regenerate views (Teacher Guide,
+    Parent Report, Social Story, Therapist Summary) -> linters (sensitivity
+    leak, freshness, cross-doc consistency) -> PDF export (fpdf2) ->
     planted-leak drill (the demo moment) -> report.
 
-Zero external dependencies (Python stdlib only). Deterministic output.
+Zero required dependencies (Python stdlib only) — PDF export is optional and
+activates when `fpdf` is installed. Deterministic output.
 
 Usage:
     python tools/dryrun.py                     # both students (batch)
@@ -33,10 +35,16 @@ ROOT = Path(__file__).resolve().parent.parent          # <repo>/casecraft
 STUDENTS = ROOT / "students"
 OUTBASE = ROOT / "dryrun"
 
-# Sensitivity-leak linter: tokens that must never reach parent/teacher/student views.
-BANNED = ["iep", "clinical", "goals file", "goal progress", "progress notes",
-          "assessment", "diagnos", "tier 2", "behaviour plan", "comply"]
+# Sensitivity-leak linter tokens.
+# FAMILY_BANNED: must never reach parent/teacher/student-facing views.
+# THERAPIST_HARD: the only tokens the Therapist Summary must never contain —
+#                 everything else in the list is legitimate working vocabulary
+#                 for the professional team.
+FAMILY_BANNED = ["iep", "clinical", "goals file", "goal progress", "progress notes",
+                 "assessment", "diagnos", "tier 2", "behaviour plan", "comply"]
+THERAPIST_HARD = ["diagnos"]  # even the team doc never asserts a diagnosis
 
+# Context mapping for the Patterns table (event_type -> activity context).
 CONTEXTS = {
     "cover_ears": "mixer running", "self_regulation_use": "mixer running",
     "stand_still": "between task steps", "help_request_prompted": "next step unknown",
@@ -45,18 +53,56 @@ CONTEXTS = {
     "talk": "group discussion",
 }
 
-# Final session deliverables per student (deterministic; mirrors passport "Notes").
-NOTES = {
+# Per-student evidence notes (deterministic; mirrors passport "Notes").
+# Each entry: goal-progress row(s), what-went-well bullet, home-strategy bullet.
+STUDENT_NOTES = {
     "marco": {
-        "goal": ("Goal 1 (help-seeking <=2 prompts): MET — 2 prompted + 1 unprompted. "
-                 "Goal 3 (work experience): completed the 3-step job routine."),
-        "whatworks": ("Self-initiated ear defenders when the mixer started (10:15, no cue) — "
-                      "the scripted reminder from 09:16 worked."),
+        "script": ("Before we tidy up: 5 more minutes, then we tidy the trays together.",
+                   "transition warning before tidying"),
+        "progress": [
+            ("Asking for help when unsure (up to 2 prompts)",
+             "Asked 3 times: 2 after one prompt each, 1 freely at 10:30", "Met"),
+            ("Work experience readiness (3-step job routine)",
+             "Completed bagging → labelling → packing flow without a missed step", "Progressing"),
+        ],
+        "well": [
+            "Reached for the ear support before the machine sound — no reminder needed at 10:15",
+            "Asked \"What should I do next?\" freely after the second tray",
+            "Said at debrief: \"I asked Mrs. Chan two questions. I knew the answer to the third one.\"",
+        ],
+        "home": [
+            "Practice the script: \"Before we tidy up: 5 more minutes, then we tidy the trays together.\"",
+            "Look at the MTR route for the bakery together — route details are calming",
+            "Keep ear support in the same bag pocket every day",
+        ],
+        "watch": [
+            "Pauses longer than ~30 seconds before the next step",
+            "Hands moving toward ears when a machine starts",
+        ],
     },
     "priya": {
-        "goal": ("Goal 1 (contribute one idea, <=2 prompts): met — 1 prompted + 1 unprompted."),
-        "whatworks": ("Fact-checker role in the group poster kept engagement without prompts; "
-                      "written instructions removed ambiguity."),
+        "script": ("Take a minute, then write it down.",
+                   "private, written-response cue"),
+        "progress": [
+            ("Contributing one idea in group work (assigned role)",
+             "Fact-checker role: 1 idea after one prompt, 1 freely at 11:38", "Met"),
+            ("Using a private help channel instead of struggling silently",
+             "Asked a follow-up question in writing after the session", "Progressing"),
+        ],
+        "well": [
+            "Took the fact-checker role and used it — asked for the poster sources in writing",
+            "Stayed in the group the whole activity with the assigned role",
+            "Asked a follow-up question by email after class — the private channel worked",
+        ],
+        "home": [
+            "Keep the same phrase at home: \"Take a minute, then write it down.\"",
+            "Sketching before talking about the day — drawing regulates",
+            "Agree on a private signal for \"I need a quiet moment\"",
+        ],
+        "watch": [
+            "Going quiet and dropping eye contact during group activities",
+            "Erasing or restarting written work repeatedly",
+        ],
     },
 }
 
@@ -160,53 +206,97 @@ def render_passport(passport: Path, date_s: str, patterns_tbl: str, log_entry: s
     return txt, newver
 
 
-def teacher_guide(name: str, tr: dict, date_s: str) -> str:
-    counts = ", ".join(f"{k}={v}" for k, v in tr["counts"].items())
-    return f"""# Teacher guide — {name} ({date_s})
+# ---------------------------------------------------------------- view renderers
 
-*Generated by CaseCraft from the student passport. Fictional demo data.*
+def teacher_guide(name: str, tr: dict, date_s: str, brief: str, script: str) -> str:
+    counts = "; ".join(f"{k}: {v}" for k, v in tr["counts"].items())
+    return f"""# Teacher Guide — {name} ({date_s})
 
-## Today, in one paragraph
-{name} worked towards: "{tr['goal']}". Session outcome: **{tr['assess']}**.
-Observations: {counts}.
+*Draft for professional review — generated by CaseCraft.*
 
-## What helps in the room
-- One instruction at a time. Literal language — no idioms.
-- Noise: {name} self-started the ear support once the machine sound began (session note).
-- If there is a pause before the next step, wait a few seconds, then use the script
-  below — many people pause before a new step; the pause itself is not a problem.
+**Situation:** {brief.split(chr(10))[0][:140]}
 
-## The script — say it word for word (same words as the family guide)
-> "Before we tidy up: 5 more minutes, then we tidy the trays together."
+## Snapshot
+{name} communicates best with clear, literal language and one instruction at a time.
+New or loud situations can be hard; advance warning and written steps help a lot.
 
-## Positive framing
-"Great — you asked. That helps me help you." Only positive reinforcement appears in
-this guide; if something was hard, that is the situation, not the child.
+## What to expect
+- May pause before the next step and not ask — waiting briefly, then using the script below, works.
+- In a loud environment, may reach for ear support or cover ears. This is self-regulation, not refusal.
+- Asks precise questions when unsure; vague answers ("maybe", "we'll see") cause confusion.
+
+## What helps
+- One instruction at a time, in literal language — no idioms.
+- If there is a pause before the next step, wait a few seconds, then use the script.
+- Give a written step list when the task has more than two steps.
+- Offer the ear support before the machine starts, so it is a choice, not a rescue.
+
+## What to avoid
+- Abstract or sarcastic phrasing ("hold your horses").
+- Repeating a question before waiting ~5 seconds.
+- Raising your voice over the machine — the ear support is the tool, not volume.
+
+## Language to use (same words as the family report)
+> "{script}"
+
+## Warning signs
+- Pauses longer than ~30 seconds before the next step.
+- Hands moving toward ears without the ear support nearby.
+- Looks at the exit repeatedly during a new activity.
+
+## Escalation plan
+If the signs above persist, offer the script once, then the break option. Contact:
+____ (fill in the school contact) if support is needed.
+
+---
+*Session evidence: {counts}.*
 """
 
 
-def parent_guide(name: str, date_s: str) -> str:
-    return f"""# Family guide — {name} ({date_s})
+def parent_report(name: str, tr: dict, date_s: str, brief: str, notes: dict) -> str:
+    progress_rows = "".join(
+        f"| {g} | {ev} | {st} |\n" for g, ev, st in notes["progress"])
+    well = "".join(f"- {b}\n" for b in notes["well"])
+    home = "".join(f"- {b}\n" for b in notes["home"])
+    watch = "".join(f"- {b}\n" for b in notes["watch"])
+    script, script_ctx = notes["script"]
+    return f"""# Parent Report — {name} ({date_s})
 
-*A short update for home. Fictional demo data.*
+*Draft for professional review — generated by CaseCraft.*
 
-## Today
-- Helped themselves: when the room got loud, {name} reached for the ear support
-  before anything else needed to happen.
-- Asked for the next step 3 times — the last one freely, with no reminder.
-- Paused twice between jobs (45 s and 30 s) and then continued. Many people pause
-  before the next step; the pause itself was fine (more in Notes).
+**Situation:** {brief.split(chr(10))[0][:140]}
 
+## Overview
+{name} worked towards: "{tr['goal']}". Session outcome: **{tr['assess']}**.
+This report summarises what happened and what you can reinforce at home.
+
+## What we're working on
+| What we're working on | Evidence this session | Status |
+|---|---|---|
+{progress_rows}
+*No status without evidence — if it says "Met", the evidence is in the middle column.*
+
+## What went well
+{well}
+## Home strategies
+{home}
 ## Same words at home
-Say the same sentence the class uses, so things stay consistent:
-> "Before we tidy up: 5 more minutes, then we tidy the trays together."
+Say the same phrase the class uses ({script_ctx}), so things stay consistent:
+> "{script}"
 
-## Notes
-- New situations are hard for many people. Keep the first few times gentle and short.
-- This update is written deliberately for the family; the bigger picture lives with
-  the professional team (school social worker / teacher).
+## What to watch for
+{watch}
+If you see these, the script above and a quiet minute usually help.
 
-*Questions? Ask the school social worker — they hold the bigger picture.*
+## Next session focus
+Building on what worked this session — more practice with the same script and one
+new step.
+
+## Contact
+____ (fill in the professional's name and role)
+
+*This update is written deliberately for the family; the bigger picture lives with
+the professional team.*
 """
 
 
@@ -231,7 +321,7 @@ def social_story(name: str, date_s: str, first_person: bool) -> str:
             "ask, or the teacher shows the first step.\n\n"
             "At the end of the lesson, the teacher says: \"5 more minutes, then we\n"
             "tidy the tables together.\"")
-    return f"""# Social story — {name} ({date_s})
+    return f"""# Social Story — {name} ({date_s})
 
 {story}
 
@@ -240,16 +330,57 @@ home and at school. Fictional demo data.*
 """
 
 
+def therapist_summary(name: str, tr: dict, date_s: str, notes: dict) -> str:
+    progress_rows = "".join(
+        f"| {g} | {ev} | {st} |\n" for g, ev, st in notes["progress"])
+    counts = "; ".join(f"{k}: {v}" for k, v in tr["counts"].items())
+    return f"""# Therapist Summary — {name} ({date_s})
+
+*Working document for the professional team — not for family distribution.*
+
+## Relevant passport summary
+Communication: literal, precise; does not ask for help spontaneously — needs explicit
+permission scripts. Triggers: loud machine noise, transitions to unfamiliar places.
+What works: advance preview, written steps, ear support, scripts.
+
+## Goal progress
+| Goal | Evidence this session | Status | Recommended next target |
+|---|---|---|---|
+{progress_rows}
+*Session counts: {counts}.*
+
+## Patterns & trends
+Baseline observations (descriptive, correlational — never a verdict). Reassess after
+\u22653 sessions. See passport Patterns section for the event table.
+
+## Session log reference
+Session {date_s} — {tr['goal']} — outcome {tr['assess']}. Approved by {tr['worker']}.
+
+## Open questions for the team
+- Confirm whether the ~45 s and ~30 s pauses correlate with step-transition timing
+  across sessions, or with something else in the environment.
+- Validate the self-initiated regulation event (10:15) against the transcript line.
+
+## Recommended next step
+Continue the same script for one more session; introduce one new step, then re-check
+goal progress.
+"""
+
+
+# ---------------------------------------------------------------- linters
+
 def lint_views(views: dict[str, str]) -> list[dict]:
     checks = []
     for fn, txt in views.items():
-        hits = sorted({t for t in BANNED if t.lower() in txt.lower()})
+        banned = THERAPIST_HARD if fn == "therapist-summary.md" else FAMILY_BANNED
+        hits = sorted({t for t in banned if t.lower() in txt.lower()})
         checks.append({"check": f"blocked tokens in {fn}",
                        "status": "FAIL" if hits else "PASS",
                        "detail": ", ".join(hits) if hits else "clean"})
     scripts = {fn: re.findall(r'"([^"\n]+)"', txt) for fn, txt in views.items()}
-    shared = set(scripts["teacher-guide.md"]) & set(scripts["parent-guide.md"])
-    checks.append({"check": "verbatim script identical teacher/family",
+    shared = set(scripts.get("teacher-guide.md", [])) & \
+        set(scripts.get("parent-guide.md", []))
+    checks.append({"check": "verbatim script identical teacher/parent",
                    "status": "PASS" if shared else "FAIL",
                    "detail": " and ".join(sorted(shared)) if shared else "no shared script"})
     return checks
@@ -273,14 +404,87 @@ def lint_freshness(stamps: dict, ref: str) -> list[dict]:
 
 
 def drill(student: str, name: str, views_dir: Path) -> dict:
-    dirty = (f"# Family guide — {name} (DRILL MODE)\n\n"
+    dirty = (f"# Parent Report — {name} (DRILL MODE)\n\n"
              "## Progress\nToday's data is being logged under the goals file in the "
              "passport (goal progress), ahead of the next clinical assessment and its "
              "review with the team.\n")
     (views_dir / "leak-drill-faulty-parent-guide.md").write_text(dirty, encoding="utf-8")
-    hits = sorted({t for t in BANNED if t.lower() in dirty.lower()})
+    hits = sorted({t for t in FAMILY_BANNED if t.lower() in dirty.lower()})
     return {"hits": hits, "verdict": "BLOCKED (FAIL)" if hits else "unexpected PASS"}
 
+
+# ---------------------------------------------------------------- PDF export
+
+def export_pdf(md_path: Path, out_dir: Path) -> Path | None:
+    """Render one .md file to PDF via fpdf2 if available; else return None."""
+    try:
+        from fpdf import FPDF
+    except ImportError:
+        return None
+    txt = md_path.read_text(encoding="utf-8")
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    # Use a Unicode-capable TTF so em-dashes and CJK-safe punctuation render.
+    font_ok = False
+    for cand, cand_b in (("C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/arialbd.ttf"),
+                         ("C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/segoeuib.ttf"),
+                         ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                          "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")):
+        if Path(cand).is_file():
+            try:
+                pdf.add_font("Body", "", cand)
+                if Path(cand_b).is_file():
+                    pdf.add_font("Body", "B", cand_b)
+                pdf.set_font("Body", "", 11)
+                font_ok = True
+                break
+            except Exception:
+                continue
+    if not font_ok:
+        return None  # no Unicode font — skip PDF rather than emit garbage
+    for ln in txt.splitlines():
+        if ln.startswith("# "):
+            pdf.set_font("Body", "B", 14)
+            pdf.multi_cell(0, 8, ln[2:].strip(), new_x="LMARGIN", new_y="NEXT")
+            pdf.set_font("Body", "", 11)
+        elif ln.startswith("## "):
+            pdf.set_font("Body", "B", 12)
+            pdf.multi_cell(0, 7, ln[3:].strip(), new_x="LMARGIN", new_y="NEXT")
+            pdf.set_font("Body", "", 11)
+        elif ln.startswith("| ") and "|" in ln[2:]:
+            cells = [c.strip() for c in ln.strip("|").split("|")]
+            pdf.cell(0, 6, " | ".join(cells), border=0, new_x="LMARGIN", new_y="NEXT")
+        elif ln.strip().startswith(">"):
+            pdf.set_text_color(80, 80, 80)
+            pdf.multi_cell(0, 6, ln.strip().lstrip(">").strip(), new_x="LMARGIN", new_y="NEXT")
+            pdf.set_text_color(0, 0, 0)
+        elif ln.strip() == "":
+            pdf.ln(3)
+        else:
+            pdf.multi_cell(0, 6, ln, new_x="LMARGIN", new_y="NEXT")
+    out = out_dir / (md_path.stem + ".pdf")
+    pdf.output(str(out))
+    return out
+
+
+def export_all_pdfs(views_dir: Path, extra: list[Path]) -> list[str]:
+    """Export every .md view to PDF; returns list of PDF paths created."""
+    made = []
+    for md in sorted(views_dir.glob("*.md")):
+        if md.name.startswith("leak-drill"):
+            continue
+        p = export_pdf(md, views_dir)
+        if p:
+            made.append(str(p))
+    for md in extra:
+        p = export_pdf(md, views_dir)
+        if p:
+            made.append(str(p))
+    return made
+
+
+# ---------------------------------------------------------------- runner
 
 def run_student(student: str, sdir: Path, sess_dir: Path) -> dict:
     passport = sdir / "passport.md"
@@ -294,7 +498,8 @@ def run_student(student: str, sdir: Path, sess_dir: Path) -> dict:
     evs = parse_capture(capture)
     name = pp["name"]
     newver = bump(pp["version"])
-    notes = NOTES.get(student, NOTES["priya"])
+    notes = STUDENT_NOTES.get(student, STUDENT_NOTES["priya"])
+    brief = tr["goal"]  # brief = session goal for the session loop
 
     out = OUTBASE / f"{student}" / sess_dir.name.replace("-", "_")
     views_dir = out / "views"
@@ -311,7 +516,7 @@ def run_student(student: str, sdir: Path, sess_dir: Path) -> dict:
 ## Questions for the worker
 - Q1: pauses (45 s / 30 s) before new steps — observed, no speech. Not a verdict;
   route: within usual range for step transition? Monitor across sessions.
-- Q2: self-initiated ear support at the second machine start (no cue) — candidate
+- Q2: self-initiated regulation at the second machine start (no cue) — candidate
   positive micro-event; verify the transcript line.
 
 ## Observed events (timestamps)
@@ -329,7 +534,7 @@ def run_student(student: str, sdir: Path, sess_dir: Path) -> dict:
     gate = f"""# Review gate — {date_s}
 Approver: {tr["worker"]}
 Decision: **APPROVED with one edit**
-- Q1 edit: "Pauses occurred between task steps during work experience; record in
+- Q1 edit: "Pauses occurred between task steps during the session; record in
   patterns and reassess after ≥3 sessions."
 - Q2: confirmed self-initiated — documented as a positive micro-event.
 
@@ -342,20 +547,22 @@ Decision: **APPROVED with one edit**
                  f"{tr['goal'][:80]} — {tr['assess']}. Approved by {tr['worker']}.")
     p_tbl = "\n".join(pattern_rows(evs))
     body, newver = render_passport(passport, date_s, p_tbl, log_entry,
-                                   notes["goal"], notes["whatworks"])
+                                   notes["progress"][0][0], notes["well"][0])
     (out / f"03-passport-v{newver}.md").write_text(body, encoding="utf-8")
 
     # --- Step 7: views ------------------------------------------------------
     views = {
-        "teacher-guide.md": teacher_guide(name, tr, date_s),
-        "parent-guide.md": parent_guide(name, date_s),
+        "teacher-guide.md": teacher_guide(name, tr, date_s, brief, notes["script"][0]),
+        "parent-guide.md": parent_report(name, tr, date_s, brief, notes),
         "social-story.md": social_story(name, date_s, student == "marco"),
+        "therapist-summary.md": therapist_summary(name, tr, date_s, notes),
     }
     for fn, body in views.items():
         (views_dir / fn).write_text(body, encoding="utf-8")
 
     # --- Linters ------------------------------------------------------------
-    checks = lint_views(views) + lint_freshness(parse_passport(out / f"03-passport-v{newver}.md")["stamps"], date_s)
+    checks = lint_views(views) + lint_freshness(
+        parse_passport(out / f"03-passport-v{newver}.md")["stamps"], date_s)
     passed = sum(1 for c in checks if c["status"] == "PASS")
     d = drill(student, name, views_dir)
     table = "\n".join(f"| {c['check']} | {c['status']} | {c['detail']} |" for c in checks)
@@ -366,24 +573,29 @@ Decision: **APPROVED with one edit**
 {table}
 
 ## Blocking sensitivity gate (drill)
-- Faulty family-guide draft (deliberate) → {"FAIL — delivery blocked" if d["hits"] else d["verdict"]}
+- Faulty parent-report draft (deliberate) → {"FAIL — delivery blocked" if d["hits"] else d["verdict"]}
   tokens: {", ".join(d["hits"]) or "none"}
 - Regenerated cleanly → all views re-checked: PASS (see table).
 
 > The drill proves: a single blocked token blocks the whole pack until a human fixes it.
 """
     (out / "05-linter-report.md").write_text(report, encoding="utf-8")
+
+    # --- Step 8: PDF export (optional) --------------------------------------
+    pdfs = export_all_pdfs(views_dir, [out / "05-linter-report.md"])
+    pdf_note = f" ({len(pdfs)} PDFs)" if pdfs else " (PDF export: fpdf2 not installed)"
+
     (out / "summary.json").write_text(json.dumps({
         "student": student, "session": date_s, "outcome": tr["assess"],
         "passport": f"{pp['version']} -> {newver}",
-        "checks": f"{passed}/{len(checks)}", "drill": d["verdict"]}, indent=2),
-        encoding="utf-8")
-    return f"{student:<8}{date_s:<12}{tr['assess']:<10}{pp['version']}->{newver:<8}{passed}/{len(checks)} drill: {d['verdict']}"
+        "checks": f"{passed}/{len(checks)}", "drill": d["verdict"],
+        "pdfs": pdfs}, indent=2), encoding="utf-8")
+    return f"{student:<8}{date_s:<12}{tr['assess']:<10}{pp['version']}->{newver:<8}{passed}/{len(checks)} drill: {d['verdict']}{pdf_note}"
 
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    students = args or list(NOTES.keys())
+    students = args or list(STUDENT_NOTES.keys())
     shutil.rmtree(OUTBASE, ignore_errors=True)
     results = []
     for student in students:
@@ -402,5 +614,4 @@ def main():
 
 
 if __name__ == "__main__":
-    from datetime import datetime
     main()

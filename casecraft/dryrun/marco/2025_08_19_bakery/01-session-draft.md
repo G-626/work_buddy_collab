@@ -5,7 +5,7 @@
 ## Questions for the worker
 - Q1: pauses (45 s / 30 s) before new steps — observed, no speech. Not a verdict;
   route: within usual range for step transition? Monitor across sessions.
-- Q2: self-initiated ear support at the second machine start (no cue) — candidate
+- Q2: self-initiated regulation at the second machine start (no cue) — candidate
   positive micro-event; verify the transcript line.
 
 ## Observed events (timestamps)

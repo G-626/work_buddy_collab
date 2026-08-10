@@ -48,6 +48,6 @@ accumulates over time.
 1. Session draft summary (observables, goal progress, questions for the worker)
 2. Review gate prompt: approve or edit
 3. On approval: passport version bump, updated sections listed
-4. Regenerated views with linter summary
-5. File paths
+4. Regenerated views (Teacher Guide, Parent Report, optional Social Story, Therapist Summary) with linter summary
+5. PDF + file paths
 6. Closing line: *"Session approved and merged. Views regenerated for your review."*

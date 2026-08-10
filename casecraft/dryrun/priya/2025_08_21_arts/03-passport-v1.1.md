@@ -36,7 +36,7 @@
 
 ## What works [open]
 
-- *Session note: Fact-checker role in the group poster kept engagement without prompts; written instructions removed ambiguity.*
+- *Session note: Took the fact-checker role and used it — asked for the poster sources in writing*
 
 - **Private feedback** — written comments on work, or a quiet word after class, never in
   front of peers. Responds well, asks follow-up questions.
@@ -56,7 +56,7 @@
 
 ## Goals (current) [team]
 
-*Goal 1 (contribute one idea, <=2 prompts): met — 1 prompted + 1 unprompted.*
+*Contributing one idea in group work (assigned role)*
 
 1. Contribute one idea in a group setting, with a pre-assigned role, ≤ 2 prompts.
 2. Use a private help-seeking channel (email, after-class question) instead of struggling

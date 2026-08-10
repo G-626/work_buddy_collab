@@ -29,7 +29,7 @@
 
 ## What works [open]
 
-- *Session note: Self-initiated ear defenders when the mixer started (10:15, no cue) — the scripted reminder from 09:16 worked.*
+- *Session note: Reached for the ear support before the machine sound — no reminder needed at 10:15*
 
 - Advance preview + written step list → visibly calmer, asks good questions.
 - Explicit "asking for help" scripts — uses them when written down.
@@ -44,7 +44,7 @@
 
 ## Goals (current) [team]
 
-*Goal 1 (help-seeking <=2 prompts): MET — 2 prompted + 1 unprompted. Goal 3 (work experience): completed the 3-step job routine.*
+*Asking for help when unsure (up to 2 prompts)*
 
 1. Use a help-seeking script in an unfamiliar setting, ≤ 2 prompts.
 2. Tolerate one planned transition per month with preparation, without escalation.

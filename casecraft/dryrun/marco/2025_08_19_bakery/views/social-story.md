@@ -1,4 +1,4 @@
-# Social story — Marco L. (FICTIONAL DEMO DATA) (2025-08-19)
+# Social Story — Marco L. (FICTIONAL DEMO DATA) (2025-08-19)
 
 The bakery is a big room. Many people work there.
 

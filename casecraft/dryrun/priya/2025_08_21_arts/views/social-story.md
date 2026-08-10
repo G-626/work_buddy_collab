@@ -1,4 +1,4 @@
-# Social story — Priya S. (FICTIONAL DEMO DATA) (2025-08-21)
+# Social Story — Priya S. (FICTIONAL DEMO DATA) (2025-08-21)
 
 The art room has one big table. Everyone has a job.
 
