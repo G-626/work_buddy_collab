@@ -4,15 +4,17 @@
 
 ```
 /casecraft <student-id> "<situation brief>"
+/casecraft <student-id> "<situation brief>" --lang=bilingual
 /casecraft batch "<situation brief>" --students <id1,id2,...>
 ```
 
 ## What it does
 
-Invokes the `casecraft` skill (skills/casecraft/SKILL.md): loads the student's dossier,
-reads audience tags, generates a Coordinated Support Pack (Teacher Guide + Parent Guide +
-optional Social Story), lints each document, runs cross-document consistency checks,
-saves all outputs to a dated pack folder, and returns a summary + full texts for
+Invokes the `casecraft` skill (skills/casecraft/SKILL.md): loads the student's
+passport, reads the sensitivity tags, generates a Coordinated Support Pack
+(Teacher Guide + Parent Report + optional Social Story + Therapist Summary), lints
+each document, runs cross-document consistency checks, exports PDFs, saves all
+outputs to a dated pack folder, and returns a summary + full texts for
 professional review.
 
 ## Examples
@@ -35,7 +37,7 @@ different teacher (Ms. Liu), group project in week 3."
 ## Response shape
 
 1. Summary line: `N documents generated, X checks passed, Y auto-fixed, Z flagged for your review`
-2. Full document texts (Teacher Guide, Parent Guide, optional Social Story)
+2. Full document texts (Teacher Guide, Parent Report, optional Social Story, Therapist Summary)
 3. Linter report (full audit trail, saved to pack folder)
-4. Saved file paths
+4. PDF + saved file paths
 5. Closing line: *"Drafts for your review — please edit before use."*
