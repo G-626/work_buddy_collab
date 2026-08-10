@@ -3,10 +3,11 @@
 > goal: Contribute one idea in a group setting, with a pre-assigned role, no more than 2 prompts | outcome: MET
 
 ## Questions for the worker
-- Q1: pauses (45 s / 30 s) before new steps — observed, no speech. Not a verdict;
-  route: within usual range for step transition? Monitor across sessions.
-- Q2: self-initiated regulation at the second machine start (no cue) — candidate
-  positive micro-event; verify the transcript line.
+- Q1: The 2-second look-down before answering at 11:15 — is this consistent
+  with her private feedback preference, or a pattern to watch in future group
+  sessions?
+- Q2: 11:18 — Ms. Liu's acknowledgement was public. Priya showed no visible
+  response. No interpretation; recorded for worker awareness only.
 
 ## Observed events (timestamps)
 - 11:00 — Arrived at room change; sat at edge of group; began sketching immediately

@@ -3,9 +3,7 @@
 *Working document for the professional team — not for family distribution.*
 
 ## Relevant passport summary
-Communication: literal, precise; does not ask for help spontaneously — needs explicit
-permission scripts. Triggers: loud machine noise, transitions to unfamiliar places.
-What works: advance preview, written steps, ear support, scripts.
+Communication: highly articulate in structured settings, goes quiet in unstructured social time; masks heavily. Triggers: being singled out, unstructured social time, ambiguous instructions. What works: private feedback, assigned roles, advance warning, art as regulation.
 
 ## Goal progress
 | Goal | Evidence this session | Status | Recommended next target |
@@ -23,9 +21,8 @@ Baseline observations (descriptive, correlational — never a verdict). Reassess
 Session 2026-08-10 — Contribute one idea in a group setting, with a pre-assigned role, no more than 2 prompts — outcome MET. Approved by K. Wong, School Social Worker (observing; class taught by Ms. Liu).
 
 ## Open questions for the team
-- Confirm whether the ~45 s and ~30 s pauses correlate with step-transition timing
-  across sessions, or with something else in the environment.
-- Validate the self-initiated regulation event (10:15) against the transcript line.
+- The 2-second look-down before answering at 11:15 — is this consistent with her private feedback preference, or a pattern to watch in future group sessions?
+- 11:18: Ms. Liu's acknowledgement was public. Priya showed no visible response. No interpretation; recorded for worker awareness only.
 
 ## Recommended next step
 Continue the same script for one more session; introduce one new step, then re-check

@@ -1,6 +1,6 @@
 # Worked Example — Patterns from Marco's bakery session (FICTIONAL)
 
-The Movement Event Stream in `students/marco/sessions/2025-08-19-bakery/capture.md`
+The Movement Event Stream in `students/marco/sessions/2026-08-08-bakery/capture.md`
 ingests into the passport's **Patterns** section after the review gate.
 
 ## Step 6 output (first session → baseline)

@@ -44,7 +44,7 @@ CaseCraft replaces this with one coordinated system: **one passport, kept curren
 │    (goals, triggers, scripts, movement-pattern counts, stamps)     │
 ├───────────────────────────────────────────────────────────────────┤
 │ 6. STAKEHOLDER VIEWS — regenerate role-specific outputs            │
-│    Teacher Guide · Parent Guide · Therapist Sheet · Social Story   │
+│    Teacher Guide · Parent Report · Therapist Sheet · Social Story   │
 │    · passport.html (family/team UI) — all linter-checked           │
 ├───────────────────────────────────────────────────────────────────┤
 │ 7. (platform-native, optional) AUTOMATION — scheduled freshness    │
@@ -131,12 +131,12 @@ The passport is never handed out raw. Stakeholders get role-specific views (see 
 | View | Contains | Never contains |
 |---|---|---|
 | Teacher Guide | Communication style, supports, warning signs, language to use/avoid | Diagnosis, clinical history |
-| Parent Guide | What the child is preparing for, what to reinforce at home, plain language, optional Chinese | Diagnosis, clinical records |
+| Parent Report | What the child is preparing for, what to reinforce at home, plain language, optional Chinese | Diagnosis, clinical records |
 | Therapist Summary | Full working detail, goals, patterns (descriptive), session log | — (clinically scoped) |
 | Student materials (Social Story) | Situation-specific narrative | Diagnosis, labels, "problem" framing |
 | passport.html | Curated family/team dashboard (permission-filtered) | Anything not allowed for the viewer |
 
-**Sensitivity leak check** (new linter class): every view is verified against `[open] / [team] / [clinical]` tags — a clinical-tagged section appearing in the Parent Guide is a blocking FLAG. This is the demo moment other teams can't copy: catch a planted leak on stage.
+**Sensitivity leak check** (new linter class): every view is verified against `[open] / [team] / [clinical]` tags — a clinical-tagged section appearing in the Parent Report is a blocking FLAG. This is the demo moment other teams can't copy: catch a planted leak on stage.
 
 ## 8. Glossary
 
@@ -163,7 +163,7 @@ _Avoid_: negative framing, behavior scoring
 **Review Gate**: the ~90-second worker approval step before a session summary merges into the passport. Consent of the human is the trust mechanism of the system.
 _Avoid_: approval flow, moderation
 
-**Sensitivity Leak**: a linter finding where a restricted section (e.g. clinical) appears in a view that must not contain it (e.g. Parent Guide). Blocking FAIL.
+**Sensitivity Leak**: a linter finding where a restricted section (e.g. clinical) appears in a view that must not contain it (e.g. Parent Report). Blocking FAIL.
 _Avoid_: privacy error, data leakage
 
 **Command**: the professional's entry surface. Primary: `/session <student-id> --goal="..."` (capture → summary → passport) and `/casecraft <student-id> "brief"` (specialized pack generation). No `--audiences` flag — audience tags live in the passport; the skill reads them.
@@ -178,7 +178,7 @@ _Avoid_: report, log
 **Social Story**: personalised literal-language narrative for a specific situation (Carol Gray 10.2), optional teen-facing document of the pack. Linted against the 10.2 criteria.
 _Avoid_: story, script, guide
 
-**Teacher Guide / Parent Guide / Therapist Summary**: the role-specific views generated from the passport (see section 7). Written for busy mainstream professionals/non-specialists, plain language, correct register.
+**Teacher Guide / Parent Report / Therapist Summary**: the role-specific views generated from the passport (see section 7). Written for busy mainstream professionals/non-specialists, plain language, correct register.
 _Avoid_: lesson plan, letter home, staff briefing
 
 **passport.html**: the readable, printable UI for families and teams, generated from the passport (permission-filtered). Built in WorkBuddy's Coding Mode and previewed in its built-in browser.
@@ -187,7 +187,7 @@ _Avoid_: dashboard, portal, app
 **Pilot Readiness**: the stage where a professional installs WorkBuddy, copies the skills, creates a real (pseudonymized) passport, and starts using the loop with no code changes. Actively piloting with HK Children & Youth Services is pitched as an aspiration, not a commitment.
 _Avoid_: deployment, production
 
-**Hackathon MVP**: one `/session` command + the review gate + passport delta + two views (Teacher Guide, Parent Guide) + leak-check linter + the MCP capture-engine demo (movement event stream → patterns section). Batch = `/session ... --batch` across 2–3 fictional dossiers (Marco, Priya). Demo media is always fictional/simulated — no real child's audio/video is ever captured or shown.
+**Hackathon MVP**: one `/session` command + the review gate + passport delta + two views (Teacher Guide, Parent Report) + leak-check linter + the MCP capture-engine demo (movement event stream → patterns section). Batch = `/session ... --batch` across 2–3 fictional dossiers (Marco, Priya). Demo media is always fictional/simulated — no real child's audio/video is ever captured or shown.
 _Avoid_: the product, v1, full version
 
 ## 9. Commands (surface)
