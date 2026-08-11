@@ -1,258 +1,449 @@
 #!/usr/bin/env python3
-"""CaseCraft 10-slide hackathon deck (fpdf2, A4 landscape).
+"""Build the CaseCraft 10-slide deck (Hyperstudio style) -> deck.html -> PDF via headless Chrome.
 
-Design rules (shared with casecraft/tools/pdfrender.py):
-- ONE accent colour (deep blue 31,78,121); hierarchy via font weight/size only.
-- Mirrored padding: every text frame is vertically centred, top pad == bottom pad.
-- Real system dates only (2026-08-12). No status colours, no zebra.
+Design system: Obsidian canvas #101010, Chalk #f3f3f3, Smoke #9c9c9c, Graphite #212121
+hairlines, Compass Gold #6f6759 1.5px outlined icons, weight-400 typography (Segoe UI
+as Aeonik substitute, Consolas as Input substitute), ASCII dither texture + checkerboard
+overlay, one white pill CTA. No drop shadows, no bold display, no email addresses.
 """
-from fpdf import FPDF
+import random, subprocess, os, sys
 
-PRIMARY = (31, 78, 121)
-BAND_SUB = (200, 216, 232)
-INK = (34, 40, 46)
-MUTED = (110, 118, 126)
-PAPER = (255, 255, 255)
-W, H = 297, 210
-ML, MR = 18, 18          # side margins (mirrored)
-MT = 34                   # content starts below the band
-MB = 16                   # bottom margin (mirrored with slide-footer gap)
+random.seed(20260812)
+CHARS = ".:·+×░▒▓"
+GRID_COLS, GRID_ROWS = 200, 70
+def make_texture():
+    rows = []
+    for _ in range(GRID_ROWS):
+        line = "".join(random.choice(CHARS) if random.random() < 0.30 else " " for _ in range(GRID_COLS))
+        rows.append(line)
+    return "\n".join(rows)
 
-class Deck(FPDF):
-    def __init__(self):
-        super().__init__(orientation="L", unit="mm", format="A4")
-        self.set_auto_page_break(False)
-        self.slide_no = 0
-        self.set_margins(ML, MT, MR)
-        fdir = r"C:\Windows\Fonts"
-        self.add_font("Arial", "", fdir + r"\arial.ttf")
-        self.add_font("Arial", "B", fdir + r"\arialbd.ttf")
-        self.add_font("Arial", "I", fdir + r"\ariali.ttf")
-        self.add_font("Arial", "BI", fdir + r"\arialbi.ttf")
-        self.set_font("Arial", "", 10.5)
+TEXTURE = make_texture()
 
-    def header(self):
-        self.slide_no += 1
-        self.set_fill_color(*PRIMARY)
-        self.rect(0, 0, W, 14, "F")
-        self.set_font("Arial", "B", 11)
-        self.set_text_color(*BAND_SUB)
-        self.set_xy(ML, 3.4)
-        self.cell(0, 7, f"{self.section_label}  ·  CASECRAFT", align="L")
-        self.set_font("Arial", "", 9)
-        self.set_xy(W - ML - 30, 3.4)
-        self.cell(30, 7, f"{self.slide_no:02d} / 10", align="R")
+HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CaseCraft — deck</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root {
+    --obsidian: #101010; --carbon: #080808; --chalk: #f3f3f3; --smoke: #9c9c9c;
+    --ash: #c1c1c1; --graphite: #212121; --iron: #474747; --gold: #6f6759;
+    --pulse: #98ff38; --white: #ffffff;
+    --sans: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'Consolas', 'Cascadia Mono', 'Courier New', monospace;
+  }
+  @page { size: 297mm 210mm; margin: 0; }
+  html, body { background: var(--obsidian); }
+  body { font-family: var(--sans); color: var(--chalk); }
 
-    def footer(self):
-        self.set_y(H - 10)
-        self.set_font("Arial", "", 8)
-        self.set_text_color(*MUTED)
-        self.cell(0, 5, "CaseCraft — Agent Creativity Hackathon 2026 (WorkBuddy track) — 2026-08-12", align="C")
+  .slide { position: relative; width: 297mm; height: 210mm; overflow: hidden;
+           background: var(--obsidian); page-break-after: always;
+           display: flex; flex-direction: column; }
+  .slide:last-child { page-break-after: auto; }
 
-    def title_slide(self, kicker, title, subtitle, meta, note):
-        self.section_label = "CASECRAFT"
-        self.add_page()
-        # centered block with mirrored padding
-        block_h = 110
-        y0 = (H - block_h) / 2
-        self.set_xy(ML, y0)
-        self.set_font("Arial", "B", 12)
-        self.set_text_color(*PRIMARY)
-        self.cell(0, 8, kicker, align="C")
-        self.ln(14)
-        self.set_font("Arial", "B", 34)
-        self.set_text_color(*INK)
-        self.multi_cell(W - ML - MR, 16, title, align="C")
-        self.ln(4)
-        self.set_font("Arial", "", 13.5)
-        self.set_text_color(*MUTED)
-        self.multi_cell(W - ML - MR, 8, subtitle, align="C")
-        self.ln(10)
-        self.set_font("Arial", "B", 11.5)
-        self.set_text_color(*PRIMARY)
-        self.multi_cell(W - ML - MR, 7, meta, align="C")
-        self.ln(6)
-        self.set_font("Arial", "I", 9.5)
-        self.set_text_color(*MUTED)
-        self.multi_cell(W - ML - MR, 6, note, align="C")
+  /* ASCII dither texture — atmosphere, not content */
+  .ascii { position: absolute; top: -12mm; left: -12mm; z-index: 0;
+           font-family: var(--mono); font-size: 6px; line-height: 6.4px;
+           letter-spacing: 0; white-space: pre; color: var(--graphite);
+           opacity: .5; transform: scale(1.8); transform-origin: top left;
+           user-select: none; pointer-events: none; }
+  /* dithered checkerboard overlay */
+  .dither { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+            background-image: repeating-conic-gradient(#ffffff 0% 25%, transparent 0% 50%);
+            background-size: 3px 3px; opacity: .028; mix-blend-mode: overlay; }
 
-    def slide(self, label, title, blocks, image=None, img_w=0, img_h=0, img_cap=""):
-        self.section_label = label
-        self.add_page()
-        # title
-        self.set_xy(ML, 22)
-        self.set_font("Arial", "B", 20)
-        self.set_text_color(*INK)
-        self.multi_cell(W - ML - MR, 11, title, align="L")
-        y = self.get_y() + 3
-        # optional image (left) or full-width blocks
-        if image:
-            self.set_xy(ML, y + 2)
-            self.image(image, w=img_w, h=img_h)
-            if img_cap:
-                self.set_font("Arial", "I", 8.5)
-                self.set_text_color(*MUTED)
-                self.set_xy(ML, y + 2 + img_h + 1.5)
-                self.multi_cell(img_w, 4.5, img_cap, align="C")
-            tx = ML + img_w + 10
-            tw = W - ML - MR - img_w - 10
-            self.render_blocks(blocks, tx, y, tw)
-        else:
-            self.render_blocks(blocks, ML, y, W - ML - MR)
-        # mirrored bottom padding: equal space below content
-        self.set_y(H - MB - 4)
+  .inner { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column;
+           padding: 14mm 24mm 10mm; }
 
-    def render_blocks(self, blocks, x, y, w):
-        self.set_xy(x, y)
-        for kind, text in blocks:
-            if kind == "h":
-                self.set_font("Arial", "B", 12.5)
-                self.set_text_color(*PRIMARY)
-                self.multi_cell(w, 7, text, align="L")
-                self.ln(1.2)
-            elif kind == "b":
-                self.set_font("Arial", "", 10.5)
-                self.set_text_color(*INK)
-                self.multi_cell(w, 6.1, text, align="L", markdown=True)
-                self.ln(0.8)
-            elif kind == "gap":
-                self.ln(3)
-            elif kind == "note":
-                self.set_font("Arial", "I", 9)
-                self.set_text_color(*MUTED)
-                self.multi_cell(w, 5.2, text, align="L")
-                self.ln(1)
+  /* header row */
+  .hdr { display: flex; justify-content: space-between; align-items: baseline;
+         border-bottom: 1px solid var(--graphite); padding-bottom: 4mm; margin-bottom: 10mm; }
+  .kicker { font-family: var(--mono); font-size: 10px; letter-spacing: .18em;
+            text-transform: uppercase; color: var(--gold); }
+  .pageno { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--smoke); }
 
-def main():
-    d = Deck()
-    d.title_slide(
-        "AGENT CREATIVITY HACKATHON 2026 · WORKBUDDY TRACK",
-        "CaseCraft",
-        "Coordinated Support Packs from an Autism Passport —\none agent run, four audiences, one audited record.",
-        "Team CaseCraft · enochfyw@gmail.com · github.com/G-626/work_buddy_collab",
-        "Verified in the real WorkBuddy app on 2026-08-12 (Level-2). Demo data is fictional.",
-    )
-    d.slide(
-        "PROBLEM",
-        "One child. Five adults. Five partial pictures.",
-        [
-            ("b", "An autism student is supported by parents, a class teacher, subject teachers, a social worker and a therapist. Each keeps **their own notes** — different names for the same trigger, different instructions for the same transition."),
-            ("b", "Reports arrive **late, duplicated and inconsistent**; a teacher gets a strategy memo, the parent gets a clinical phrase no one explained."),
-            ("b", "And the same sensitive detail can leak into the wrong audience's document — eroding trust, or worse."),
-            ("gap", ""),
-            ("h", "The cost"),
-            ("b", "Support depends on the **memory of whoever is in the room** — not on a shared, versioned record of what actually works for this child."),
-            ("note", "Demo data in this deck is fictional (Marco L., 14). No real child's information is shown anywhere."),
-        ],
-    )
-    d.slide(
-        "SOLUTION",
-        "The passport: one curated record, four coordinated views.",
-        [
-            ("b", "**CaseCraft** keeps a single **autism passport** per student — what supports them, their communication profile, triggers & sensory needs — curated by a human social worker, **versioned** (v1.0 → v1.1 → v1.2)."),
-            ("b", "Every session adds a **passport delta**; every delivery renders four **audience-specific views** from the same source of truth:"),
-            ("b", "**Parent report** — plain language · **Teacher guide** — classroom strategies · **Social story** — first person, for the student · **Therapist summary** — session evidence."),
-            ("gap", ""),
-            ("h", "Observables, not verdicts"),
-            ("b", "The machine extracts **what was observed** (\"covered ears ×3 when the mixer started\") and the **therapist interprets** (\"builds tolerance with ear defenders\"). No automated diagnosis, no microexpression-to-emotion claims."),
-        ],
-    )
-    d.slide(
-        "AGENT LOOP",
-        "Plan · Execute · Review · Deliver — one run, audited.",
-        [
-            ("b", "A WorkBuddy agent runs the **session skill** end to end from a capture package (transcript + observables):"),
-            ("b", "**1 · Draft** — session summary with timestamps, counts, quotes, open questions for the worker."),
-            ("b", "**2 · Two-pass linter** — blocked-token scan + cross-audience parity (teacher & parent must say the same thing, never verbatim-identical script)."),
-            ("b", "**3 · Review gate** — nothing merges without the social worker's sign-off (ADR-0004)."),
-            ("b", "**4 · Passport delta** — v1.0 → v1.1 — then regenerate all four views + the linter report."),
-            ("gap", ""),
-            ("h", "Human stays in the loop"),
-            ("b", "The gate is **APPROVED with one edit** in the verified run — the machine proposes, the professional disposes."),
-        ],
-    )
-    d.slide(
-        "LEVEL-2 VERIFIED",
-        "Imported into the real WorkBuddy app — and it ran.",
-        [
-            ("b", "Both skills were **imported into WorkBuddy v4.10.4** (logged in as enochfyw@gmail.com) via their native skill store."),
-            ("b", "**casecraft** — \"Generate coordinated, audited support packs…\" · **session** — \"Turn session capture packages into approved summaries and passport deltas.\""),
-            ("b", "Install count went **8 → 10**; the skill descriptions shown in-app come straight from the YAML frontmatter."),
-            ("b", "A task invoking the session skill for Marco's bakery session was created in the app and **ran to completion on 2026-08-12**."),
-            ("b", "The full artifact chain landed in the student's session folder (next slide)."),
-        ],
-        image=r"C:\Users\admin\casecraft-media\skills-installed.png",
-        img_w=118, img_h=70,
-        img_cap="WorkBuddy app — Skills tab, INSTALLED: 10 (casecraft, session highlighted). Captured 2026-08-12.",
-    )
-    d.slide(
-        "ARTIFACT CHAIN",
-        "What the agent produced — every file verified.",
-        [
-            ("h", "students/marco/sessions/2026-08-08-bakery/"),
-            ("b", "**01-session-draft.md** — observed events w/ timestamps, counts, quotes, open questions."),
-            ("b", "**02-review-gate.md** — Decision: **APPROVED with one edit** (K. Wong, School Social Worker)."),
-            ("b", "**03-passport-v1.1.md** — passport delta (1.0 → 1.1, Last updated 2026-08-12)."),
-            ("b", "**05-linter-report.md** — **6/6 checks PASS**; leak drill **BLOCKED (FAIL)** as designed."),
-            ("b", "**summary.json** — outcome MET · checks 6/6 · drill BLOCKED."),
-            ("b", "**views/** — parent guide, teacher guide, social story, therapist summary + linter report, rendered to PDF (34–43 KB each)."),
-            ("gap", ""),
-            ("note", "Draft content is agent-written (LLM variance); the linter + gate + engine make the output auditable regardless of that variance."),
-        ],
-    )
-    d.slide(
-        "THE MOAT",
-        "Deterministic quality gates against LLM variance.",
-        [
-            ("b", "A pure-LLM pipeline drifts. CaseCraft's linter is **code, not vibes** — it runs the same checks every time."),
-            ("b", "**Blocked-token scan** — clinical vocabulary (\"assessment\", \"clinical\", \"goals file\") is caught in every audience view."),
-            ("b", "**Verbatim-script parity** — teacher and parent guides must reference the same script but never share verbatim sentences."),
-            ("b", "**Freshness** — passport sections untouched >30 days are flagged for review."),
-            ("gap", ""),
-            ("h", "The leak drill"),
-            ("b", "A deliberately faulty parent draft was fed to the gate: **FAIL — delivery blocked** (tokens: assessment, clinical, goal progress, goals file). One blocked token blocks the whole pack until a human fixes it."),
-            ("b", "Then the pack was regenerated cleanly: **all views PASS** (see the 6/6 table)."),
-        ],
-    )
-    d.slide(
-        "WORKBUDDY USAGE",
-        "Native skills, automation, and per-person delivery.",
-        [
-            ("b", "**skill.yml manifests** — each skill ships with the WorkBuddy-native metadata file (name, description, allowed-tools, config) plus SKILL.md — uploadable as a folder or .zip."),
-            ("b", "**allowed-tools: Read, Write, Bash** — the agent reads the session folder, writes the artifacts, and runs the engine scripts."),
-            ("b", "**Automation tasks** — a daily task checks each student's **next-session marker**; the day before a session it collects parent/teacher replies and drafts the pre-session brief (T-1 feedback loop)."),
-            ("b", "**Per-person delivery** — each stakeholder receives only their view via their own messenger DM (Slack per-user DM = the per-login document, read-only by construction; replies feed the next hypothesis)."),
-        ],
-    )
-    d.slide(
-        "HONEST LIMITS",
-        "Secure by design — disclosed, not hidden.",
-        [
-            ("b", "**Local transcription** — audio is transcribed on-device (Whisper); the audio file never leaves the machine."),
-            ("b", "**Remote summarisation, disclosed** — WorkBuddy sends content to third-party LLMs (retention up to 14 days; Singapore/PRC transfer). We say **\"secure by design\"** — human-in-the-loop review + pseudonymised data + local transcription — never \"everything stays local\"."),
-            ("b", "**Observables only** — no microexpression→emotion claims; the machine reports events, the therapist interprets."),
-            ("b", "**Fictional demo data** — Marco L. and Priya are fixtures; no real child's audio or identity is used."),
-            ("gap", ""),
-            ("h", "Not in scope (stated, not hidden)"),
-            ("b", "No hosted web app or logins — delivery is per-role files + messenger DMs. No automated diagnosis — the passport is a support record, not a clinical document."),
-        ],
-    )
-    d.slide(
-        "NEXT",
-        "From verified loop to pilot.",
-        [
-            ("b", "**Capture** — phone/tablet recording on the worker's device (the stop button lives there); whisper transcribes, the skill ingests."),
-            ("b", "**Observables** — MediaPipe landmarks → posture/gaze events in the capture package."),
-            ("b", "**Delivery** — Slack per-user DMs live; Automation feedback loop wired to next-session markers."),
-            ("b", "**Pilot** — one partner school, 3–5 students, 4 weeks: measure report turnaround (days → hours) and cross-audience consistency."),
-            ("gap", ""),
-            ("h", "Today, verified"),
-            ("b", "Level-1 engine (deterministic dry-run, 6/6 checks) **and** Level-2 in-app run — both green on 2026-08-12. Skills are uploadable to the portal as-is (folder or .zip with SKILL.md + YAML)."),
-            ("note", "Team CaseCraft · enochfyw@gmail.com · github.com/G-626/work_buddy_collab"),
-        ],
-    )
-    d.output(r"C:\Users\admin\hackathon_submit\casecraft-deck.pdf")
-    print("deck written")
+  /* content */
+  .content { flex: 1; display: flex; flex-direction: column; }
+  .icrow { margin-bottom: 7mm; }
+  .icrow svg { width: 30px; height: 30px; }
+  h1 { font-weight: 400; font-size: 41px; line-height: 1.04; letter-spacing: -0.02em;
+       color: var(--chalk); max-width: 210mm; margin-bottom: 7mm; }
+  .sub { font-size: 17px; line-height: 1.4; color: var(--smoke); max-width: 170mm; margin-bottom: 9mm; }
+  p, li { font-size: 14.5px; line-height: 1.52; color: var(--smoke); }
+  ul { list-style: none; }
+  li { padding-left: 7mm; position: relative; margin-bottom: 3.2mm; max-width: 200mm; }
+  li::before { content: "—"; position: absolute; left: 0; color: var(--iron); }
+  .strong { color: var(--chalk); }
+  .gold { color: var(--gold); }
+  .mono { font-family: var(--mono); font-size: 12px; letter-spacing: .02em; }
 
-if __name__ == "__main__":
-    main()
+  /* badges */
+  .badge { display: inline-flex; align-items: center; gap: 2.6mm; background: #1a1a1a;
+           border: 1px solid var(--graphite); border-radius: 4px; padding: 2.2mm 4mm;
+           font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+           text-transform: uppercase; color: var(--smoke); margin: 0 3mm 3mm 0; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pulse); display: inline-block; }
+
+  /* quote */
+  .quote { border-left: 1px solid var(--gold); padding-left: 6mm; margin: 8mm 0;
+           max-width: 175mm; }
+  .quote p { font-size: 19px; line-height: 1.35; color: var(--chalk); font-weight: 400; }
+
+  /* console block */
+  .console { background: var(--carbon); border: 1px solid var(--graphite); border-radius: 8px;
+             font-family: var(--mono); font-size: 12.5px; line-height: 1.62; color: var(--ash);
+             padding: 6mm 7mm; max-width: 200mm; }
+  .console .c-chalk { color: var(--chalk); }
+  .console .c-gold { color: var(--gold); }
+  .console .c-green { color: var(--pulse); }
+
+  /* two-col grid (views / steps) */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; column-gap: 10mm; row-gap: 5mm; max-width: 205mm; }
+  .cell { border-bottom: 1px solid var(--graphite); padding-bottom: 3.4mm; }
+  .cell h3 { font-weight: 400; font-size: 14px; letter-spacing: .16em; text-transform: uppercase;
+             color: var(--chalk); margin-bottom: 1.6mm; }
+  .cell p { font-size: 13px; line-height: 1.45; }
+
+  /* file list (artifact chain) */
+  .files { max-width: 205mm; }
+  .frow { display: flex; justify-content: space-between; gap: 8mm; border-bottom: 1px solid var(--graphite);
+          padding: 2.8mm 0; }
+  .frow .fname { font-family: var(--mono); font-size: 12.5px; color: var(--chalk); }
+  .frow .fdesc { font-size: 13px; color: var(--smoke); text-align: right; max-width: 110mm; }
+
+  /* footer */
+  .foot { border-top: 1px solid var(--graphite); padding-top: 3.2mm; margin-top: 8mm;
+          display: flex; justify-content: space-between; align-items: center; }
+  .foot .fleft { font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em;
+                 text-transform: uppercase; color: var(--smoke); }
+  .foot .fright { font-family: var(--mono); font-size: 9.5px; color: var(--smoke); }
+
+  /* buttons */
+  .btnrow { display: flex; gap: 6mm; margin-top: 10mm; align-items: center; }
+  .pill { display: inline-block; background: var(--white); color: var(--obsidian);
+          border-radius: 9999px; padding: 4mm 9mm; font-size: 13.5px; font-weight: 400;
+          letter-spacing: .1em; text-transform: uppercase; text-decoration: none; }
+  .ghost { display: inline-block; border: 1px solid var(--white); color: var(--white);
+           border-radius: 8px; padding: 3.8mm 8mm; font-size: 13.5px; letter-spacing: .1em;
+           text-transform: uppercase; text-decoration: none; }
+  .pill .arr, .ghost .arr { color: inherit; }
+
+  /* title slide */
+  .title .hdr { border-bottom: none; }
+  .title .content { justify-content: center; align-items: flex-start; }
+  .title .kicker-big { font-family: var(--mono); font-size: 12px; letter-spacing: .3em;
+                       color: var(--gold); text-transform: uppercase; margin-bottom: 10mm; }
+  .title h1 { font-size: 82px; letter-spacing: -0.035em; line-height: 1.0; margin-bottom: 8mm; }
+  .title .sub { font-size: 21px; line-height: 1.35; max-width: 150mm; }
+  .title .sub2 { font-size: 15.5px; line-height: 1.5; color: var(--smoke); max-width: 145mm; margin-top: 4mm; }
+  .titlenote { margin-top: 14mm; font-family: var(--mono); font-size: 10px;
+               letter-spacing: .1em; text-transform: uppercase; color: var(--smoke); }
+</style>
+</head>
+<body>
+
+<!-- 01 TITLE -->
+<section class="slide title">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">CASECRAFT</span>
+      <span class="pageno">01/10</span>
+    </header>
+    <div class="content">
+      <div class="kicker-big">Agent Creativity Hackathon 2026 · WorkBuddy track</div>
+      <h1>CaseCraft</h1>
+      <div class="sub">Coordinated support packs from an autism passport.</div>
+      <div class="sub2">One child. Five adults. Five partial pictures.<br>There is a better way to understand them.</div>
+      <div class="btnrow">
+        <a class="pill" href="https://github.com/G-626/work_buddy_collab">View the repo <span class="arr">→</span></a>
+      </div>
+      <div class="titlenote">Verified in the real WorkBuddy app · 2026-08-12 · demo data is fictional</div>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">2026-08-12</span>
+    </footer>
+  </div>
+</section>
+
+<!-- 02 PROBLEM -->
+<section class="slide">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">01 · Problem</span>
+      <span class="pageno">02/10</span>
+    </header>
+    <div class="content">
+      <div class="icrow"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6759" stroke-width="1.5"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1" opacity=".35"/></svg></div>
+      <h1>Five adults. Five partial pictures.</h1>
+      <p class="sub">Every student is surrounded by parents, a class teacher, subject teachers, a social worker and a therapist — each holding <span class="strong">their own version</span> of the same child.</p>
+      <div class="quote">
+        <p>Marco covers his ears when the mixer starts. That isn't misbehaviour — it's information.</p>
+      </div>
+      <ul>
+        <li>Different names for the same trigger. Different instructions for the same transition.</li>
+        <li>Reports arrive <span class="strong">late, duplicated and inconsistent</span> — a teacher gets a strategy memo, a parent gets a clinical phrase nobody explained.</li>
+        <li>The same sensitive detail can leak into the wrong audience's document — eroding trust, or worse.</li>
+      </ul>
+      <p style="margin-top:6mm">Support depends on the <span class="strong">memory of whoever is in the room</span> — not on a shared, versioned record of what actually works for this child.</p>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">demo data is fictional</span>
+    </footer>
+  </div>
+</section>
+
+<!-- 03 PASSPORT -->
+<section class="slide">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">02 · Solution</span>
+      <span class="pageno">03/10</span>
+    </header>
+    <div class="content">
+      <div class="icrow"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6759" stroke-width="1.5"><path d="M12 6c-2-2.5-6-2.2-8 .3V20c2-2.4 6-2.7 8-.2 2-2.5 6-2.2 8 .3V6.3c-2-2.5-6-2.8-8-.3Z"/><path d="M12 6v14"/></svg></div>
+      <h1>One passport. Four views.</h1>
+      <p class="sub">A single curated <span class="strong">autism passport</span> per student — supports, communication profile, triggers and sensory needs — kept by a human social worker and <span class="strong">versioned</span> as it grows: v1.0 → v1.1 → v1.2.</p>
+      <div class="grid2" style="margin-top:2mm">
+        <div class="cell"><h3>Parent report</h3><p>Plain language. What happened, what helped, what's next.</p></div>
+        <div class="cell"><h3>Teacher guide</h3><p>Classroom strategies that work for this child.</p></div>
+        <div class="cell"><h3>Social story</h3><p>First person, for the student to read.</p></div>
+        <div class="cell"><h3>Therapist summary</h3><p>Session evidence, timestamps, counts, quotes.</p></div>
+      </div>
+      <p style="margin-top:7mm"><span class="strong">Observables, not verdicts.</span> The machine extracts what was observed — “covered ears ×3 when the mixer started”. The therapist interprets. No automated diagnosis. No microexpression-to-emotion claims.</p>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">2026-08-12</span>
+    </footer>
+  </div>
+</section>
+
+<!-- 04 AGENT LOOP -->
+<section class="slide">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">03 · Agent loop</span>
+      <span class="pageno">04/10</span>
+    </header>
+    <div class="content">
+      <div class="icrow"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6759" stroke-width="1.5"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v4h-4"/></svg></div>
+      <h1>Plan · Execute · Review · Deliver.</h1>
+      <p class="sub">A WorkBuddy agent runs the <span class="strong">session skill</span> end to end from a capture package — transcript plus observables.</p>
+      <div class="grid2" style="margin-top:2mm">
+        <div class="cell"><h3>01 · Draft</h3><p>Session summary with timestamps, counts, quotes and open questions for the worker.</p></div>
+        <div class="cell"><h3>02 · Two-pass linter</h3><p>Blocked-token scan + cross-audience parity. Teacher and parent must say the same thing — never verbatim-identical script.</p></div>
+        <div class="cell"><h3>03 · Review gate</h3><p>Nothing merges without the social worker's sign-off. Human in the loop, always.</p></div>
+        <div class="cell"><h3>04 · Passport delta</h3><p>v1.0 → v1.1, then all four audience views regenerate in one run.</p></div>
+      </div>
+      <p style="margin-top:7mm">In the verified run, the gate came back <span class="strong">APPROVED with one edit</span> — the machine proposes, the professional disposes.</p>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">2026-08-12</span>
+    </footer>
+  </div>
+</section>
+
+<!-- 05 LEVEL-2 VERIFIED -->
+<section class="slide">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">04 · Level-2 verified</span>
+      <span class="pageno">05/10</span>
+    </header>
+    <div class="content">
+      <div class="icrow"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6759" stroke-width="1.5"><rect x="2" y="4" width="20" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/><path d="m6 10 3 3 5-6"/></svg></div>
+      <h1>It ran — inside the real app.</h1>
+      <div>
+        <span class="badge"><span class="dot"></span>Verified · 2026-08-12</span>
+        <span class="badge">WorkBuddy v4.10.4</span>
+      </div>
+      <p class="sub" style="margin-top:3mm">Both skills imported through the app's native skill store. A task invoking the session skill for Marco's bakery session ran to completion, and the full artifact chain landed in the session folder.</p>
+      <div class="console" style="margin-top:4mm"><span class="c-chalk">$</span> skills install ·&nbsp;&nbsp;<span class="c-green">INSTALLED → 10</span><br>
+        <span class="c-gold">casecraft</span>  Generate coordinated, audited support packs — teacher, parent, therapist views<br>
+        <span class="c-gold">session</span>    Turn session capture packages into approved summaries and passport deltas<br><br>
+        <span class="c-chalk">$</span> run session → marco · 2026-08-08-bakery<br>
+        draft · review-gate · passport-v1.1 · linter 6/6 · summary.json · views/ … <span class="c-green">done</span></div>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">demo data is fictional</span>
+    </footer>
+  </div>
+</section>
+
+<!-- 06 ARTIFACT CHAIN -->
+<section class="slide">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">05 · Artifact chain</span>
+      <span class="pageno">06/10</span>
+    </header>
+    <div class="content">
+      <div class="icrow"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6759" stroke-width="1.5"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg></div>
+      <h1>Every file verified.</h1>
+      <p class="sub">students/marco/sessions/2026-08-08-bakery/ — what the agent produced, checked, and rendered:</p>
+      <div class="files">
+        <div class="frow"><span class="fname">01-session-draft.md</span><span class="fdesc">observed events, timestamps, counts, quotes, open questions</span></div>
+        <div class="frow"><span class="fname">02-review-gate.md</span><span class="fdesc">APPROVED with one edit — K. Wong, School Social Worker</span></div>
+        <div class="frow"><span class="fname">03-passport-v1.1.md</span><span class="fdesc">passport delta — v1.0 → v1.1</span></div>
+        <div class="frow"><span class="fname">05-linter-report.md</span><span class="fdesc">6/6 checks PASS · leak drill BLOCKED, as designed</span></div>
+        <div class="frow"><span class="fname">summary.json</span><span class="fdesc">outcome MET · checks 6/6 · drill BLOCKED</span></div>
+        <div class="frow"><span class="fname">views/</span><span class="fdesc">parent guide · teacher guide · social story · therapist summary — PDF, 34–43 KB each</span></div>
+      </div>
+      <p style="margin-top:6mm">The draft is agent-written — that variance is expected. The <span class="strong">linter, gate and engine make the output auditable regardless</span>.</p>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">2026-08-12</span>
+    </footer>
+  </div>
+</section>
+
+<!-- 07 THE MOAT -->
+<section class="slide">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">06 · The moat</span>
+      <span class="pageno">07/10</span>
+    </header>
+    <div class="content">
+      <div class="icrow"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6759" stroke-width="1.5"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div>
+      <h1>Deterministic gates against LLM drift.</h1>
+      <div>
+        <span class="badge"><span class="dot"></span>Linter 6/6 PASS</span>
+        <span class="badge">Leak drill BLOCKED</span>
+      </div>
+      <p class="sub" style="margin-top:3mm">A pure-LLM pipeline drifts. CaseCraft's linter is <span class="strong">code, not vibes</span> — the same checks, every run.</p>
+      <ul style="margin-top:2mm">
+        <li><span class="strong">Blocked-token scan</span> — clinical vocabulary (“assessment”, “clinical”, “goals file”) is caught in every audience view.</li>
+        <li><span class="strong">Verbatim-script parity</span> — teacher and parent guides must reference the same script, never share verbatim sentences.</li>
+        <li><span class="strong">Freshness</span> — passport sections untouched for over 30 days are flagged for review.</li>
+      </ul>
+      <div class="quote" style="margin-top:6mm">
+        <p>The drill: a deliberately faulty parent draft was fed to the gate — <span class="strong">FAIL, delivery blocked</span> (tokens: assessment, clinical, goal progress, goals file). One blocked token blocks the whole pack until a human fixes it.</p>
+      </div>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">2026-08-12</span>
+    </footer>
+  </div>
+</section>
+
+<!-- 08 WORKBUDDY USAGE -->
+<section class="slide">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">07 · WorkBuddy usage</span>
+      <span class="pageno">08/10</span>
+    </header>
+    <div class="content">
+      <div class="icrow"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6759" stroke-width="1.5"><path d="M5 4v16M12 4v16M19 4v16"/><path d="M3 8h4M10 14h4M17 6h4"/></svg></div>
+      <h1>Native skills. Automation. Per-person delivery.</h1>
+      <div class="grid2" style="margin-top:2mm">
+        <div class="cell"><h3>skill.yml manifests</h3><p>Each skill ships the WorkBuddy-native metadata file — name, description, allowed-tools, config — plus SKILL.md. Uploadable as a folder or a .zip.</p></div>
+        <div class="cell"><h3>allowed-tools: Read, Write, Bash</h3><p>The agent reads the session folder, writes the artifacts, and runs the engine scripts. A capability contract, not a daemon.</p></div>
+        <div class="cell"><h3>Automation tasks</h3><p>A daily task checks each student's next-session marker. The day before a session it collects parent and teacher replies and drafts the pre-session brief.</p></div>
+        <div class="cell"><h3>Per-person delivery</h3><p>Each stakeholder receives only their view, via their own messenger DM — read-only by construction. Replies feed the next session's hypothesis.</p></div>
+      </div>
+      <p style="margin-top:7mm">No hosted web app, no custom logins. The per-user DM <span class="strong">is</span> the per-login document.</p>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">2026-08-12</span>
+    </footer>
+  </div>
+</section>
+
+<!-- 09 HONEST LIMITS -->
+<section class="slide">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">08 · Honest limits</span>
+      <span class="pageno">09/10</span>
+    </header>
+    <div class="content">
+      <div class="icrow"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6759" stroke-width="1.5"><rect x="4" y="10" width="16" height="11" rx="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+      <h1>Secure by design — disclosed, not hidden.</h1>
+      <ul style="margin-top:2mm">
+        <li><span class="strong">Local transcription</span> — audio is transcribed on-device (Whisper); the recording never leaves the worker's machine.</li>
+        <li><span class="strong">Remote summarisation, disclosed</span> — WorkBuddy sends content to third-party LLMs (retention up to 14 days, Singapore / PRC transfer). We say “secure by design” — human-in-the-loop review, pseudonymised data, local transcription. We never say “everything stays local”.</li>
+        <li><span class="strong">Observables only</span> — no microexpression-to-emotion claims. The machine reports events; the therapist interprets.</li>
+        <li><span class="strong">Fictional demo data</span> — Marco and Priya are fixtures. No real child's audio or identity anywhere.</li>
+      </ul>
+      <p style="margin-top:7mm"><span class="strong">Not in scope, stated plainly:</span> no hosted web app or logins — delivery is per-role files plus messenger DMs. No automated diagnosis — the passport is a support record, not a clinical document.</p>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">2026-08-12</span>
+    </footer>
+  </div>
+</section>
+
+<!-- 10 NEXT -->
+<section class="slide">
+  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <div class="inner">
+    <header class="hdr">
+      <span class="kicker">09 · Next</span>
+      <span class="pageno">10/10</span>
+    </header>
+    <div class="content">
+      <div class="icrow"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6759" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-5"/></svg></div>
+      <h1>From verified loop to pilot.</h1>
+      <div class="grid2" style="margin-top:2mm">
+        <div class="cell"><h3>Capture</h3><p>Phone or tablet recording on the worker's device; whisper transcribes, the skill ingests.</p></div>
+        <div class="cell"><h3>Observables</h3><p>MediaPipe landmarks → posture and gaze events in the capture package.</p></div>
+        <div class="cell"><h3>Delivery</h3><p>Messenger per-user DMs live; the automation feedback loop wired to next-session markers.</p></div>
+        <div class="cell"><h3>Pilot</h3><p>One partner school, 3–5 students, 4 weeks — measure report turnaround from days to hours, and cross-audience consistency.</p></div>
+      </div>
+      <p style="margin-top:7mm"><span class="strong">Today, verified:</span> the Level-1 engine (deterministic dry-run, 6/6 checks) and the Level-2 in-app run — both green on 2026-08-12. The skills are uploadable to the portal as-is.</p>
+      <div class="btnrow">
+        <a class="pill" href="https://github.com/G-626/work_buddy_collab">Start the pilot <span class="arr">→</span></a>
+        <a class="ghost" href="https://github.com/G-626/work_buddy_collab">View the repo <span class="arr">→</span></a>
+      </div>
+      <p style="margin-top:6mm; font-size:12.5px; color:var(--smoke)">Team CaseCraft · github.com/G-626/work_buddy_collab</p>
+    </div>
+    <footer class="foot">
+      <span class="fleft">CaseCraft — Agent Creativity Hackathon 2026</span>
+      <span class="fright">2026-08-12</span>
+    </footer>
+  </div>
+</section>
+
+</body>
+</html>
+"""
+
+HTML = HTML.replace("__TEXTURE__", TEXTURE)
+
+base = r"C:\Users\admin\hackathon_submit"
+html_path = os.path.join(base, "casecraft-deck.html")
+pdf_path = os.path.join(base, "casecraft-deck.pdf")
+with open(html_path, "w", encoding="utf-8") as f:
+    f.write(HTML)
+print("html written:", os.path.getsize(html_path), "bytes")
+
+chrome = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+cmd = [chrome, "--headless=new", "--disable-gpu", "--no-sandbox",
+       "--no-pdf-header-footer", "--virtual-time-budget=8000",
+       f"--print-to-pdf={pdf_path}", f"file:///{html_path.replace(chr(92), '/')}"]
+r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+print("chrome rc:", r.returncode)
+if r.stderr.strip():
+    print("stderr tail:", r.stderr.strip()[-300:])
+print("pdf size:", os.path.getsize(pdf_path) if os.path.exists(pdf_path) else "MISSING")
