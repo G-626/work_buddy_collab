@@ -1,0 +1,55 @@
+# CaseCraft — Coordinated Support Pack skill manifest (WorkBuddy custom skill)
+# Format per WorkBuddy docs: "skill.yml — Metadata, description, and configuration"
+# Full agent workflow lives in SKILL.md (the brain); this file is the config + entry.
+
+name: casecraft
+display_name: "casecraft"
+display_name_en: "casecraft"
+version: 1.0.0
+homepage: https://github.com/G-626/work_buddy_collab
+icon: "https://www.google.com/s2/favicons?domain=github.com&sz=256"
+visibility: public
+
+description: >
+  Turn a student's autism passport and a situation brief into a Coordinated
+  Support Pack — Teacher Guide, Parent Report (en/zh/bilingual), Social Story
+  and Therapist Summary — with a two-pass linter (methodology, cross-document
+  consistency, sensitivity-leak check, freshness).
+description_zh: "将自闭症学生护照与情境简报转为协调支持包（教师指南、家长报告、社交故事、治疗师摘要），经双轮审查（方法、一致性、敏感信息泄漏）"
+description_en: "Turn an autism passport + situation brief into a Coordinated Support Pack (teacher guide, parent report, social story, therapist summary) with two-pass linter checks."
+
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+
+requires:
+  runtime: "python3"
+  tools:
+    - casecraft/tools/pdfrender.py   # styled PDF export
+    - casecraft/tools/dryrun.py      # Level-1 deterministic replay (demo)
+
+files:
+  - SKILL.md                         # full agent workflow (the brain)
+  - templates/                       # 4 view templates + 5 linter checklists
+  - ../commands/casecraft.md         # /casecraft slash surface
+
+workflow:
+  inputs:
+    - student_id: "one of students/<id>/passport.md"
+    - situation_brief: "one line or paragraph describing the upcoming situation"
+    - audiences: "default all four (teacher, parent, social-story, therapist)"
+  steps:
+    - "Read the student's passport and the situation brief."
+    - "Select the audience set (default: all four views)."
+    - "Render each view from templates using passport data ONLY — observables, never emotional inference."
+    - "Run the two-pass linter: methodology, cross-document consistency, sensitivity leaks, freshness."
+    - "BLOCK on any sensitivity-leak FAIL — never ship; fix together with the professional."
+    - "Export views as .md + styled PDF (pdfrender.py)."
+  outputs:
+    - "packs/<date>-<student>-<slug>/ with teacher-guide, parent-guide, social-story, therapist-summary (+ PDFs)"
+    - "linter-report.md audit trail"
+  principles:
+    - "Observables only — no diagnostic claims ('not diagnostic' line in every report)."
+    - "Human-in-the-loop — generated documents are drafts for review and sign-off."
+    - "Fictional demo data only in examples; real use is pseudonymised."
