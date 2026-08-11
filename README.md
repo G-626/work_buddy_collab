@@ -1,71 +1,174 @@
-# CaseCraft — WorkBuddy custom agent skill (Agent Creativity Hackathon, WorkBuddy track)
+# CaseCraft — WorkBuddy custom-agent skill suite
 
-One **Student Passport** per student — fed by a **session agent loop** — rendered into
-linter-verified **stakeholder views** for teachers, parents and therapists. Built for
-professionals (social workers, SEN teachers, therapists) supporting teens with
-mild–moderate autism in Hong Kong.
+**Agent Creativity Hackathon, WorkBuddy track.** A WorkBuddy skill suite that keeps
+**one Student Passport per child** and turns every therapy/support session into
+audited, audience-specific documents for the adults around the child — teacher,
+parents, therapist — built for professionals (social workers, SEN teachers,
+therapists) supporting teens with mild–moderate autism in Hong Kong.
 
-> **All student data in this repo is fictional demo data** (Marco L., Priya S.).
+> **All student data in this repo is fictional demo data** (Marco L., 14 · Priya S., 15).
 > No real minor's audio, video, or records are used or shown.
 
 ---
 
 ## The loop in one line
 
-`/session <student> --goal="…"` → capture (mock: `transcript.md` + `capture.md` →
-observables only) → review gate (worker approves, ~90 s) → passport delta (versioned)
-→ views regenerate (Teacher Guide · Parent Guide · Social Story) — every output
-linter-checked (methodology · cross-doc consistency · **sensitivity leaks** · freshness).
+`/session marco --goal="…"` → capture package (`transcript.md` + `capture.md`,
+observables only) → draft summary → **human review gate** (therapist edits/approves,
+~90 s) → passport delta (v1.0 → v1.1) → views regenerate (Teacher Guide · Parent
+Report · Social Story · Therapist Summary) — every output linter-checked
+(methodology · cross-doc consistency · **sensitivity leaks** · freshness).
 
-## Install into WorkBuddy (runbook for judges)
+## Architecture
 
-1. Start WorkBuddy (desktop app).
-2. Grant the agent workspace access to this folder (local files; nothing leaves the device).
-3. Copy the skill + command definitions in:
-   - `casecraft/skills/` → WorkBuddy `skills/` directory
-   - `casecraft/commands/` → WorkBuddy `commands/` directory
-4. Run the demo commands below.
+```
+Session (audio/video)
+   │  record on therapist's device          ── device side
+   ▼
+capture package:  transcript.md             Local Whisper (tools/transcribe.py) — REAL, PR #8
+                  capture.md                MediaPipe observables — roadmap/mocked (fixtures)
+   │
+   ▼
+/session  (skills/session — Session Agent Loop)
+   │  draft summary
+   ▼
+REVIEW GATE  ◄────────────── therapist edits / approves (nothing merges without it)
+   │  approved
+   ▼
+passport delta (versioned) + linter report
+   │
+   ▼
+/casecraft (skills/casecraft — Coordinated Support Pack)
+   │  Teacher Guide · Parent Report · Social Story · Therapist Summary (MD + PDF)
+   ▼
+delivery to stakeholders  ── roadmap: Slack per-user DMs (one chat per parent/teacher)
+```
 
-## Demo commands (2 fictional students)
+## Repo layout
+
+| Path | What it is |
+|---|---|
+| `casecraft/skills/casecraft/` | Support-Pack skill (SKILL.md + 5 templates + 5 linters) |
+| `casecraft/skills/session/` | Session Agent Loop skill (SKILL.md + `templates/patterns.md`) |
+| `casecraft/commands/` | Slash-command surfaces: `/session`, `/casecraft` |
+| `casecraft/tools/dryrun.py` | Stdlib-only **Level-1 demo engine** — replays the whole loop, no app needed |
+| `casecraft/tools/pdfrender.py` | Styled PDF export (system dates, single-accent hierarchy, mirrored padding) |
+| `casecraft/tools/transcribe.py` | **Local Whisper transcription** (faster-whisper) — real audio → schema-matched `transcript.md` (PR #8) |
+| `casecraft/students/` | Fictional dossiers: `marco/`, `priya/` — passports + capture packages |
+| `casecraft/dryrun/` | Verified regeneration output (drafts, review gate, passport v1.1, 4 views, 5 PDFs, linter report) |
+| `casecraft/examples/` | Narrated demo moments (leak-catch, batch, patterns-trend) — the stage beats |
+| `casecraft/SUBMISSION.md` | Submission package map (what's in the zip) |
+| `casecraft/index.html` | One-page pitch / runbook |
+| `CONTEXT.md` | Product design bible (passport, agent loop, hard principles) |
+| `docs/adr/0001…0005` | Decision records (incl. 0002 secure-by-design, 0005 observables-only) |
+| `docs/workbuddy-capability-tests.md` | T1–T10 platform capability evidence |
+
+---
+
+## How to use — three ways
+
+### 1. Deterministic demo without the app (Level-1) — start here
+
+```bash
+cd casecraft
+python tools/dryrun.py            # both fictional students
+python tools/dryrun.py marco      # one student
+```
+
+Output lands in `dryrun/<student>/<session>/`:
+`01-session-draft` → `02-review-gate` → `03-passport-v1.1` → `05-linter-report`
+→ `views/` (4 view .md + 5 dated PDFs + the leak-drill fixture).
+Both students regenerate **6/6 linter PASS**; the leak drill is intentionally
+**BLOCKED** (it's the stage moment: a `[team]` reference leaking into a Parent
+Guide gets caught and fixed).
+
+### 2. In WorkBuddy (Level-2, the real app)
+
+1. Start the WorkBuddy desktop app.
+2. Grant the agent workspace access to this folder.
+3. Import the skills (`casecraft/skills/casecraft/`, `casecraft/skills/session/`
+   — SKILL.md files with portal metadata) and commands (`casecraft/commands/`).
+4. Run:
 
 ```text
+/session marco --goal="work experience: ask for help when unsure, no more than 2 prompts"
 /casecraft marco "First work-experience day at Sunbeam Bakery, Tue 19 Aug 9:00–15:30,
 Travel by MTR Jordan → Mong Kok Exit B2. Supervisor: Mrs. Chan. Jobs: bagging rolls,
 labelling. Kitchen warm, mixers loud."
-
-/session marco --goal="work experience: ask for help when unsure, no more than 2 prompts"
-
 /session batch "end-of-term review" --students marco,priya
 ```
 
-Expected outputs per run: a dated pack folder (`packs/…`) or a passport version bump
-(v1.0 → v1.1), plus a `linter-report.md` audit trail.
+> ⚠️ Level-2 end-to-end verification in the app is **pending** (see checklist) —
+> everything below the app layer is proven by Level-1 + T1–T10.
 
-## Demo moments (see `casecraft/examples/`)
+### 3. Real transcription (new, PR #8 — for hands-on testing)
 
-- `marco-bakery-session.md` — the full agent loop, worker edit at the gate
-- `leak-catch-demo.md` — **the stage moment**: a `[team]` reference leaking into a
-  Parent Guide → blocking FAIL → professional-driven fix; plus the 5-min vs 10-min
-  fact contradiction (Level 1) resolved into a word-for-word Level 2 script
-- `batch-demo.md` — two students, one goal, independent review gates
-- `marco-patterns-trend.md` — movement-event counts → Patterns (baseline until 3 sessions)
+```bash
+pip install faster-whisper          # one time
+python casecraft/tools/transcribe.py "C:\path\to\session.mp3" --model base
+```
 
-## Docs
+- Writes `transcript.md` next to the audio (or `--out <session-folder>/transcript.md`).
+- `--model small` = better quality; `base` = speed/quality sweet spot. `wav/mp3/m4a/ogg/mp4` supported.
+- **Local-only: the audio never leaves the machine.** First run downloads the model (~140 MB).
+- Verified: 43 s demo clip → 18 segments, `en (p=1.00)`, ~4 s on CPU.
 
-- `CONTEXT.md` — product design (passport, agent loop, hard principles)
-- `docs/adr/0001…0005` — decision records (incl. ADR-0005: observables-only,
-  positive-first capture layer)
-- `docs/workbuddy-capability-tests.md` — T1–T10 platform capability evidence
-- `casecraft/docs/schemas/movement-events.md` — the fixed observable vocabulary
+## Data model
 
-## Status
+- `students/<id>/passport.md` — the single source of truth (accumulating, versioned).
+- `students/<id>/sessions/<date>-<slug>/transcript.md` + `capture.md` — capture
+  package (fixtures today; real audio via `transcribe.py`).
+- `docs/schemas/movement-events.md` — the observables-only event vocabulary
+  (every event row traces to a transcript line).
+- `dryrun/` — regenerable demo output (never hand-edit; run `dryrun.py`).
 
-- Skills + commands + templates + linters: **built** (Markdown format — `.md` files
-  everywhere, per team decision)
-- Capture: **mock/simulated** for the demo (transcripts + movement-event streams)
-- Readiness: pilot-ready for a professional install (pseudonymised real use starts
-  in pilots)
+## Verification so far
+
+- **T1–T10 capability tests PASS** (`docs/workbuddy-capability-tests.md`) — incl.
+  cross-session file memory, which the feedback loop builds on.
+- **Level-1 engine**: both students 6/6 linter PASS, leak drill BLOCKED, PDFs dated today.
+- **Real transcription**: verified end-to-end (PR #8).
+- **Slack per-user delivery**: feasibility confirmed from official WorkBuddy docs
+  (Socket Mode; `chat:write`/`im:write`/`files:write` to DM a parent by Slack user
+  ID, `message.im`/`im:history` to receive their reply = the feedback channel).
+  Not yet configured — see checklist.
+
+## Design principles (don't break these)
+
+- **Observables only** — record quotes, counts, timestamps. Never emotional
+  inference; automated "microexpression → affect" is not scientifically sound for
+  this population and gets the pitch destroyed by practitioner judges (ADR-0005).
+- **Human-in-the-loop is mandatory** — nothing merges into a passport without the
+  professional's approval (the Review Gate).
+- **Secure-by-design, not "everything local"** — the app + Whisper run locally,
+  but LLM summarization is remote processing. Say it exactly that way (ADR-0002).
+- **Fictional data only** in demos; reports carry a "not diagnostic" line.
+
+## Checklist (open work)
+
+### Submission (early-bird: 12:00 HKT 2026-08-11)
+- [ ] Slide deck — PDF, ≤10 pages, ≤10 MB
+- [ ] Demo video — ≤2 min, ≤10 MB
+- [ ] Form fields: team lead name, other members (names + emails)
+- [ ] Merge PR #8, rebuild + re-verify the submission zip (≤10 MB, 1 file)
+
+### Level-2 in-app
+- [ ] Import skills + commands into WorkBuddy; run `/session`; capture screenshots
+
+### Product roadmap
+- [ ] Full-loop wiring: real transcript → session pipeline (transcribe → draft → gate → passport)
+- [ ] `/schedule <id> <date>` command — sets each student's next-session date
+- [ ] Slack app setup (Socket Mode + scopes) and per-parent DM delivery of views
+- [ ] Feedback loop: daily Automation task that triggers **only the day before the
+      next scheduled session** → `feedback-summary.md` + `session-hypothesis.md` →
+      pre-session brief to the therapist; `/session` reads the hypothesis at start
+- [ ] Attributes → DB ingestion (JSON/CSV rows per session; `sqlite3` is stdlib)
+- [ ] MediaPipe observables capture (MCP tool or device preprocessor) → real `capture.md` from video
+- [ ] `passport.html` — static per-kid read-only page (shareable link)
+- [ ] `/casenote` rapid mode
+- [ ] Gap items from gap analysis: session-comparison views, social-story length guidance
 
 ## Contributing
 
-Feature branches + pull requests only — never push to main.
+Feature branches + pull requests only — never push to main. See
+`casecraft/SUBMISSION.md` for the submission package map.
