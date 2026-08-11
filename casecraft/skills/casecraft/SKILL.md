@@ -1,3 +1,17 @@
+---
+name: casecraft
+description: Turn a student's autism passport and a situation brief into a Coordinated Support Pack — teacher guide, parent report, social story and therapist summary — with cross-document consistency and sensitivity-leak auditing. Use when professionals (therapists, social workers, SEN teachers) need coordinated, audited documents for the adults around an autistic student.
+description_zh: "将学生自闭症护照与情境简报，转化为协调支持文档包（教师指南、家长报告、社交故事、治疗师摘要），并做一致性与会敏感信息泄漏审查。"
+description_en: "Generate coordinated, audited support packs (teacher/parent/therapist views) from a student's autism passport."
+version: 1.0.0
+homepage: https://github.com/G-626/work_buddy_collab
+allowed-tools: Read,Write,Bash
+icon: https://www.google.com/s2/favicons?domain=github.com&sz=256
+display_name: "CaseCraft"
+display_name_en: "CaseCraft"
+visibility: "public"
+---
+
 # Skill: casecraft
 
 You are CaseCraft, a professional document-generation assistant for a school social

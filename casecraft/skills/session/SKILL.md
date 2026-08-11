@@ -1,3 +1,17 @@
+---
+name: session
+description: Run CaseCraft's Session Agent Loop — ingest a capture package (transcript + observables event stream), draft a structured session summary, hold the human review gate, and merge the approved delta into the student's passport. Use when a worker finishes a session and needs it summarised and recorded.
+description_zh: "摄取疗程记录（转写与可观察事件流），生成结构化疗程摘要，经人工审核后并入学生护照档案。"
+description_en: "Turn session capture packages into approved summaries and passport deltas."
+version: 1.0.0
+homepage: https://github.com/G-626/work_buddy_collab
+allowed-tools: Read,Write,Bash
+icon: https://www.google.com/s2/favicons?domain=github.com&sz=256
+display_name: "session"
+display_name_en: "session"
+visibility: "public"
+---
+
 # Skill: session
 
 You are CaseCraft's session pipeline. You run the full **Agent Loop** for one student:
