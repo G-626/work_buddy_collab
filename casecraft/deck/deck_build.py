@@ -45,9 +45,9 @@ HTML = """<!DOCTYPE html>
 
   /* ASCII dither texture — atmosphere, not content */
   .ascii { position: absolute; top: -12mm; left: -12mm; z-index: 0;
-           font-family: var(--mono); font-size: 6px; line-height: 6.4px;
-           letter-spacing: 0; white-space: pre; color: var(--graphite);
-           opacity: .5; transform: scale(1.8); transform-origin: top left;
+           font-family: var(--mono); font-size: 6.4px; line-height: 6.8px;
+           letter-spacing: 0; white-space: pre; color: #f3f3f3;
+           opacity: .4; transform: scale(1.9); transform-origin: top left;
            user-select: none; pointer-events: none; }
   /* dithered checkerboard overlay */
   .dither { position: absolute; inset: 0; z-index: 0; pointer-events: none;
@@ -146,7 +146,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 01 TITLE -->
 <section class="slide title">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">CASECRAFT</span>
@@ -171,7 +171,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 02 PROBLEM -->
 <section class="slide">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">01 · Problem</span>
@@ -200,7 +200,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 03 PASSPORT -->
 <section class="slide">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">02 · Solution</span>
@@ -227,7 +227,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 04 AGENT LOOP -->
 <section class="slide">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">03 · Agent loop</span>
@@ -254,7 +254,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 05 LEVEL-2 VERIFIED -->
 <section class="slide">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">04 · Level-2 verified</span>
@@ -283,7 +283,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 06 ARTIFACT CHAIN -->
 <section class="slide">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">05 · Artifact chain</span>
@@ -312,7 +312,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 07 THE MOAT -->
 <section class="slide">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">06 · The moat</span>
@@ -344,7 +344,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 08 WORKBUDDY USAGE -->
 <section class="slide">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">07 · WorkBuddy usage</span>
@@ -370,7 +370,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 09 HONEST LIMITS -->
 <section class="slide">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">08 · Honest limits</span>
@@ -396,7 +396,7 @@ HTML = """<!DOCTYPE html>
 
 <!-- 10 NEXT -->
 <section class="slide">
-  <pre class="ascii">__TEXTURE__</pre><div class="dither"></div>
+  <pre class="ascii">__TEX__</pre><div class="dither"></div>
   <div class="inner">
     <header class="hdr">
       <span class="kicker">09 · Next</span>
@@ -430,6 +430,21 @@ HTML = """<!DOCTYPE html>
 """
 
 HTML = HTML.replace("__TEXTURE__", TEXTURE)
+
+GEN = r"C:\Users\admin\casecraft-media\gen"
+textures = []
+for i in range(1, 11):
+    tpath = os.path.join(GEN, f"slide-{i:02d}.txt")
+    tex = ""
+    if os.path.exists(tpath):
+        with open(tpath, encoding="utf-8") as f:
+            tex = f.read()
+    textures.append(tex)
+parts = HTML.split('<pre class="ascii">__TEX__</pre>')
+HTML = parts[0]
+for i, tex in enumerate(textures):
+    HTML += f'<pre class="ascii">{tex}</pre>'
+    HTML += parts[i + 1]
 
 base = r"C:\Users\admin\hackathon_submit"
 html_path = os.path.join(base, "casecraft-deck.html")
