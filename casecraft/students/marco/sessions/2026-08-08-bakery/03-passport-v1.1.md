@@ -2,7 +2,7 @@
 
 > **This is not a diagnostic or clinical document.** It describes what supports this student.
 > Curated by: K. Wong, School Social Worker.
-> Version: 1.1 | Created: 2026-07-20 | Last updated: 2026-08-11
+> Version: 1.1 | Created: 2026-07-20 | Last updated: 2026-08-12
 
 ---
 
@@ -67,7 +67,7 @@
 
 ## Session log [team]
 
-- **2026-08-08** — bakery: Ask for help when unsure, no more than 2 prompts — MET. Approved by K. Wong, School Social Worker. (report generated 2026-08-11)
+- **2026-08-08** — bakery: Ask for help when unsure, no more than 2 prompts — MET. Approved by K. Wong, School Social Worker. (report generated 2026-08-12)
 
 ## Clinical [clinical]
 
@@ -90,11 +90,11 @@ parent, teacher, or student-facing views.*
 | Basics | 2026-07-20 |
 | Communication profile | 2026-07-20 |
 | Triggers & sensory | 2026-07-20 |
-| What works | 2026-08-11 |
+| What works | 2026-08-12 |
 | Special interests | 2026-07-20 |
-| Goals | 2026-08-11 |
-| Patterns | 2026-08-11 |
-| Session log | 2026-08-11 |
+| Goals | 2026-08-12 |
+| Patterns | 2026-08-12 |
+| Session log | 2026-08-12 |
 | Clinical | — (never auto-stamped) |
 
 *Stamp refreshes when the section is updated by an approved session or the curator.

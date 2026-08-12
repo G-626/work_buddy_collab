@@ -2,7 +2,7 @@
 
 > **This is not a diagnostic or clinical document.** It describes what supports this student.
 > Curated by: K. Wong, School Social Worker.
-> Version: 1.1 | Created: 2026-07-20 | Last updated: 2026-08-12
+> Version: 1.2 | Created: 2026-07-20 | Last updated: 2026-08-12
 
 ---
 
@@ -31,6 +31,8 @@
 
 - *Session note: Reached for the ear support before the machine sound — no reminder needed at 10:15*
 
+- *Session note: Reached for the ear support before the machine sound — no reminder needed at 10:15*
+
 - Advance preview + written step list → visibly calmer, asks good questions.
 - Explicit "asking for help" scripts — uses them when written down.
 - Numbered steps and maps/diagrams.
@@ -43,6 +45,8 @@
 - Trains generally; timetables; anything with a system and rules.
 
 ## Goals (current) [team]
+
+*Asking for help when unsure (up to 2 prompts)*
 
 *Asking for help when unsure (up to 2 prompts)*
 
