@@ -1,0 +1,65 @@
+# CaseCraft — unified skill manifest (WorkBuddy custom skill)
+# One skill = the full agent loop: capture -> review gate -> passport delta ->
+# Coordinated Support Pack (4 views) with two-pass linter. The SKILL.md instructs the
+# agent to run the whole loop; both /session and /casecraft are entry points into it.
+
+name: casecraft
+display_name: "CaseCraft"
+display_name_en: "CaseCraft"
+version: 1.0.0
+homepage: https://github.com/G-626/work_buddy_collab
+icon: "https://www.google.com/s2/favicons?domain=github.com&sz=256"
+visibility: public
+
+description: >-
+  CaseCraft — the full autism-passport agent loop in one skill. Ingest a session
+  capture package (or a situation brief), draft a structured summary, hold the human
+  review gate, merge the approved delta into the student's passport, then generate and
+  lint a Coordinated Support Pack (Teacher Guide, Parent Report, Social Story,
+  Therapist Summary) with cross-document consistency and sensitivity-leak auditing.
+description_zh: "CaseCraft —— 自闭症学生护照一体化智能循环：摄入会话记录（或情境简报），人工审核关卡，并入护照增量，再生成并审查协调支持包（教师指南、家长报告、社交故事、治疗师摘要），含一致性与敏感信息泄漏审查。"
+description_en: "The full CaseCraft autism-passport loop in one skill: capture -> review gate -> passport delta -> coordinated, audited support pack."
+
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+
+requires:
+  runtime: "python3"
+  tools:
+    - casecraft/tools/transcribe.py   # local Whisper: audio -> transcript.md (real media)
+    - casecraft/tools/dryrun.py       # Level-1 deterministic replay (demo)
+    - casecraft/tools/pdfrender.py    # styled PDF export
+
+files:
+  - SKILL.md                          # full agent workflow (the brain)
+  - templates/                        # 4 view templates + 5 linter checklists + patterns
+
+workflow:
+  commands:
+    - "/session <student-id> --goal=\"<session goal>\"  — run the full loop from a capture package"
+    - "/casecraft <student-id> \"<situation brief>\"     — generate the pack from a current passport"
+  inputs:
+    - student_id: "one of students/<id>/passport.md"
+    - capture_package: "students/<id>/sessions/<date>-<slug>/transcript.md + capture.md  (for /session)"
+    - situation_brief: "one line or paragraph describing the upcoming situation  (for /casecraft)"
+  steps:
+    - "Load the passport (students/<id>/passport.md) as the single source of truth."
+    - "Load the input: capture package (/session) or situation brief (/casecraft). Observables only."
+    - "Draft a structured session summary (events, quotes, counts, goal progress)."
+    - "HOLD the review gate: present the draft, the worker edits or approves (~90 s)."
+    - "On approval: compute the passport delta (v1.0 -> v1.1) and update the passport."
+    - "Regenerate views (Teacher Guide, Parent Report, Social Story, Therapist Summary)."
+    - "Run the two-pass linter: methodology, cross-document consistency, sensitivity leaks, freshness."
+    - "BLOCK on any sensitivity-leak FAIL — never ship; fix together with the professional."
+    - "Export views as .md + styled PDF."
+  outputs:
+    - "students/<id>/passport.md (versioned delta)"
+    - "packs/<date>-<student>-<slug>/ with teacher-guide, parent-guide, social-story, therapist-summary (+ PDFs)"
+    - "linter-report.md audit trail"
+  principles:
+    - "Observables only — never emotional inference (ADR-0005)."
+    - "Human-in-the-loop — nothing merges without professional approval."
+    - "Cross-document consistency is the moat — contradictions are FLAGs, never silent picks."
+    - "Fictional demo data only in examples; real use is pseudonymised."

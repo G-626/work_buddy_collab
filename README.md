@@ -19,12 +19,20 @@ linter-checked (methodology · cross-doc consistency · **sensitivity leaks** ·
 
 ## Install into WorkBuddy (runbook for judges)
 
-1. Start WorkBuddy (desktop app).
-2. Grant the agent workspace access to this folder (local files; nothing leaves the device).
-3. Copy the skill + command definitions in:
-   - `casecraft/skills/` → WorkBuddy `skills/` directory
-   - `casecraft/commands/` → WorkBuddy `commands/` directory
+CaseCraft is a **single skill** (`casecraft`) that contains the whole agent loop —
+capture → review gate → passport delta → coordinated support pack — with both
+`/session` and `/casecraft` entry points folded into one `SKILL.md`.
+
+1. Start WorkBuddy (desktop app) and sign in.
+2. **Skills tab → Add Skill → Upload Skill** → upload `casecraft/skills/casecraft`
+   (as a folder or zip containing `SKILL.md` at its root). One upload = one skill
+   with both commands registered.
+3. Grant the agent workspace access to this repo folder (local files; nothing
+   leaves the device) — the skill reads `students/<id>/passport.md` relative to it.
 4. Run the demo commands below.
+
+> Disk-copy alternative (no app dialog): copy `casecraft/skills/casecraft/` into
+> `~/.agents/skills/casecraft/` and restart WorkBuddy.
 
 ## Demo commands (2 fictional students)
 

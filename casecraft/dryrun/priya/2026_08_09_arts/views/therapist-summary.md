@@ -1,4 +1,4 @@
-# Therapist Summary — Priya S. (FICTIONAL DEMO DATA) (2026-08-11)
+# Therapist Summary — Priya S. (FICTIONAL DEMO DATA) (2026-08-13)
 
 *Working document for the professional team — not for family distribution.*
 
@@ -18,7 +18,7 @@ Baseline observations (descriptive, correlational — never a verdict). Reassess
 ≥3 sessions. See passport Patterns section for the event table.
 
 ## Session log reference
-Session 2026-08-11 — Contribute one idea in a group setting, with a pre-assigned role, no more than 2 prompts — outcome MET. Approved by K. Wong, School Social Worker (observing; class taught by Ms. Liu).
+Session 2026-08-13 — Contribute one idea in a group setting, with a pre-assigned role, no more than 2 prompts — outcome MET. Approved by K. Wong, School Social Worker (observing; class taught by Ms. Liu).
 
 ## Open questions for the team
 - The 2-second look-down before answering at 11:15 — is this consistent with her private feedback preference, or a pattern to watch in future group sessions?

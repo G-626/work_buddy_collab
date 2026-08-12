@@ -13,21 +13,22 @@ https://luma.com/agentcreativity
 
 ```
 casecraft/
-├── commands/
-│   ├── session.md                     # /session — the primary command (agent loop)
-│   └── casecraft.md                   # /casecraft — pack generation from passport
 ├── skills/
-│   ├── session/
-│   │   └── SKILL.md                   # Agent loop: capture → ingest → review → passport → views
-│   └── casecraft/
-│       ├── SKILL.md                   # Pack generation: passport → views → lint → save
+│   └── casecraft/                     # ONE skill = the whole agent loop
+│       ├── SKILL.md                   # Capture → review gate → passport delta →
+│       │                               #   coordinated support pack; /session + /casecraft
+│       │                               #   commands folded into one "## Commands" section
+│       ├── skill.yml                  # Manifest (metadata + workflow summary)
 │       └── templates/
 │           ├── teacher-guide.md       # Teacher Guide generation rules
 │           ├── parent-guide.md        # Parent Report generation rules
 │           ├── social-story.md        # Social Story generation rules (Carol Gray 10.2)
+│           ├── therapist-summary.md   # Therapist Summary generation rules
+│           ├── patterns.md            # Movement-event -> Patterns engine
 │           ├── linter-teacher-guide.md    # Teacher Guide linter checks
 │           ├── linter-parent-guide.md     # Parent Report linter checks
 │           ├── linter-social-story.md     # Social Story linter checks (10.2 + cross-doc)
+│           ├── linter-therapist-summary.md# Therapist Summary linter checks
 │           └── linter-sensitivity-leak.md # Sensitivity leak check (blocking)
 ├── students/                          # Fictional demo passports (per-student folders)
 │   ├── marco/
@@ -71,10 +72,16 @@ they cannot get:
 
 ## Installing in WorkBuddy
 
-Follow the WorkBuddy custom-skill doc (techpedia 144100, section 7):
-- Add the skill Markdown + templates under WorkBuddy's `skills/` directory.
-- Add `commands/session.md` and `commands/casecraft.md` under its `commands/` directory.
-- Authorise WorkBuddy to access the `casecraft/` folder.
+CaseCraft ships as **one skill** (`casecraft/skills/casecraft/`) — the whole agent
+loop in a single `SKILL.md` with both `/session` and `/casecraft` commands inside it.
+
+- **Upload Skill** (preferred): Skills tab → Add Skill → Upload Skill → select
+  `casecraft/skills/casecraft` (folder or zip with `SKILL.md` at the root). One
+  upload registers both commands.
+- **Disk copy**: copy `casecraft/skills/casecraft/` into `~/.agents/skills/casecraft/`
+  and restart WorkBuddy.
+- Authorise WorkBuddy to access the `casecraft/` folder (the skill reads
+  `students/<id>/passport.md` from there).
 
 Then run, e.g.:
 
