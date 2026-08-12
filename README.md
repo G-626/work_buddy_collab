@@ -29,16 +29,11 @@ capture package:  transcript.md             Local Whisper (tools/transcribe.py) 
                   capture.md                MediaPipe observables — roadmap/mocked (fixtures)
    │
    ▼
-/session  (skills/session — Session Agent Loop)
-   │  draft summary
+/casecraft  (ONE skill — casecraft/skills/casecraft)
+   │   contains BOTH /session and /casecraft entry points in one SKILL.md
+   │  →  draft summary  →  REVIEW GATE (therapist approves)  →  passport delta
    ▼
-REVIEW GATE  ◄────────────── therapist edits / approves (nothing merges without it)
-   │  approved
-   ▼
-passport delta (versioned) + linter report
-   │
-   ▼
-/casecraft (skills/casecraft — Coordinated Support Pack)
+Coordinated Support Pack
    │  Teacher Guide · Parent Report · Social Story · Therapist Summary (MD + PDF)
    ▼
 delivery to stakeholders  ── roadmap: Slack per-user DMs (one chat per parent/teacher)
@@ -48,9 +43,7 @@ delivery to stakeholders  ── roadmap: Slack per-user DMs (one chat per paren
 
 | Path | What it is |
 |---|---|
-| `casecraft/skills/casecraft/` | Support-Pack skill (SKILL.md + 5 templates + 5 linters) |
-| `casecraft/skills/session/` | Session Agent Loop skill (SKILL.md + `templates/patterns.md`) |
-| `casecraft/commands/` | Slash-command surfaces: `/session`, `/casecraft` |
+| `casecraft/skills/casecraft/` | **Single combined skill** — the whole agent loop (capture → review gate → passport delta → coordinated support pack) in one `SKILL.md`, with both `/session` and `/casecraft` commands folded into one `## Commands` section |
 | `casecraft/tools/dryrun.py` | Stdlib-only **Level-1 demo engine** — replays the whole loop, no app needed |
 | `casecraft/tools/pdfrender.py` | Styled PDF export (system dates, single-accent hierarchy, mirrored padding) |
 | `casecraft/tools/transcribe.py` | **Local Whisper transcription** (faster-whisper) — real audio → schema-matched `transcript.md` (PR #8) |
@@ -86,8 +79,10 @@ Guide gets caught and fixed).
 
 1. Start the WorkBuddy desktop app.
 2. Grant the agent workspace access to this folder.
-3. Import the skills (`casecraft/skills/casecraft/`, `casecraft/skills/session/`
-   — SKILL.md files with portal metadata) and commands (`casecraft/commands/`).
+3. **Skills tab → Add Skill → Upload Skill** → upload `casecraft/skills/casecraft`
+   (folder or zip with `SKILL.md` at its root). One upload registers both
+   `/session` and `/casecraft` commands. (Disk-copy alternative: copy it into
+   `~/.agents/skills/casecraft/` and restart WorkBuddy.)
 4. Run:
 
 ```text
@@ -98,8 +93,9 @@ labelling. Kitchen warm, mixers loud."
 /session batch "end-of-term review" --students marco,priya
 ```
 
-> ⚠️ Level-2 end-to-end verification in the app is **pending** (see checklist) —
-> everything below the app layer is proven by Level-1 + T1–T10.
+> ▶️ Level-2 end-to-end verification in the app is **done** — `/session marco` ran to
+> completion inside WorkBuddy (review gate APPROVED, passport delta, 4 views, linter
+> 6/6 + leak drill BLOCKED, PDFs). See "How to use" below for the exact steps.
 
 ### 3. Real transcription (new, PR #8 — for hands-on testing)
 
@@ -131,7 +127,7 @@ python casecraft/tools/transcribe.py "C:\path\to\session.mp3" --model base
 - **Slack per-user delivery**: feasibility confirmed from official WorkBuddy docs
   (Socket Mode; `chat:write`/`im:write`/`files:write` to DM a parent by Slack user
   ID, `message.im`/`im:history` to receive their reply = the feedback channel).
-  Not yet configured — see checklist.
+  Not yet configured — see Roadmap below.
 
 ## Design principles (don't break these)
 
@@ -144,29 +140,87 @@ python casecraft/tools/transcribe.py "C:\path\to\session.mp3" --model base
   but LLM summarization is remote processing. Say it exactly that way (ADR-0002).
 - **Fictional data only** in demos; reports carry a "not diagnostic" line.
 
-## Checklist (open work)
+## How to use CaseCraft in WorkBuddy (for the team)
 
-### Submission (early-bird: 12:00 HKT 2026-08-11)
-- [ ] Slide deck — PDF, ≤10 pages, ≤10 MB
-- [ ] Demo video — ≤2 min, ≤10 MB
-- [ ] Form fields: team lead name, other members (names + emails)
-- [ ] Merge PR #8, rebuild + re-verify the submission zip (≤10 MB, 1 file)
+CaseCraft is **one WorkBuddy skill** (`casecraft`). It contains the entire agent
+loop — capture → review gate → passport delta → coordinated support pack — in a
+single `SKILL.md`, with **both** slash commands (`/session` and `/casecraft`)
+folded into one `## Commands` section. You upload it **once** and both commands
+are available.
 
-### Level-2 in-app
-- [ ] Import skills + commands into WorkBuddy; run `/session`; capture screenshots
+### What you need
+- The WorkBuddy desktop app (distributed as `CodeBuddy.exe`), signed in.
+- This repo cloned locally, so the skill can read the mock student data
+  (`casecraft/students/marco`, `casecraft/students/priya`).
+- The skill folder: `casecraft/skills/casecraft/` (contains `SKILL.md`,
+  `skill.yml`, and `templates/`).
 
-### Product roadmap
-- [ ] Full-loop wiring: real transcript → session pipeline (transcribe → draft → gate → passport)
-- [ ] `/schedule <id> <date>` command — sets each student's next-session date
-- [ ] Slack app setup (Socket Mode + scopes) and per-parent DM delivery of views
-- [ ] Feedback loop: daily Automation task that triggers **only the day before the
-      next scheduled session** → `feedback-summary.md` + `session-hypothesis.md` →
-      pre-session brief to the therapist; `/session` reads the hypothesis at start
-- [ ] Attributes → DB ingestion (JSON/CSV rows per session; `sqlite3` is stdlib)
-- [ ] MediaPipe observables capture (MCP tool or device preprocessor) → real `capture.md` from video
-- [ ] `passport.html` — static per-kid read-only page (shareable link)
-- [ ] `/casenote` rapid mode
-- [ ] Gap items from gap analysis: session-comparison views, social-story length guidance
+### Install the skill (Upload Skill dialog — preferred)
+1. Open WorkBuddy → **Skills** tab (sidebar: New Task · Claw · Skills · Automation).
+2. Click **Add Skill → Upload Skill**.
+3. Select the `casecraft/skills/casecraft` folder (or a zip of it). The dialog
+   requires `SKILL.md` at the root — this folder has it.
+4. One upload registers **one** `casecraft` skill with **both** `/session` and
+   `/casecraft` commands. (The install count goes 8 → 9, not 10 — there is no
+   separate `session` skill anymore.)
+5. Authorise WorkBuddy to access this repo folder (local files; nothing leaves
+   the device). The skill reads `students/<id>/passport.md` relative to it.
+
+> **Disk-copy alternative** (if the upload dialog is awkward): copy
+> `casecraft/skills/casecraft/` into `~/.agents/skills/casecraft/` and restart
+> WorkBuddy. That folder is the user-installed skills directory the app watches.
+
+### Run it
+Open a **New Task** and type one of:
+
+```text
+/session marco --goal="work experience: ask for help when unsure, no more than 2 prompts"
+```
+Runs the full loop from Marco's capture package: draft → **review gate** (you
+approve or edit — nothing merges without you) → passport delta (v1.0 → v1.1) →
+regenerated 4 views + linter report.
+
+```text
+/casecraft marco "First work-experience day at Sunbeam Bakery, Tue 19 Aug 9:00–15:30,
+MTR Jordan → Mong Kok Exit B2. Supervisor: Mrs. Chan. Jobs: bagging rolls, labelling.
+Kitchen warm, mixers loud."
+```
+Generates the Coordinated Support Pack (Teacher Guide · Parent Report · Social
+Story · Therapist Summary) straight from the current passport + a situation brief.
+
+Batch form (one goal/brief, every student):
+```text
+/session batch "end-of-term review" --students marco,priya
+/casecraft batch "first day of new term, room changes" --students marco,priya
+```
+
+### What you should see
+- A **review gate** prompt — approve or edit before anything is saved.
+- Output written to `casecraft/students/<id>/sessions/…/` (or `packs/…`):
+  `01-session-draft` → `02-review-gate` (APPROVED) → `03-passport-v1.x` →
+  `05-linter-report` → `views/` (4 `.md` + 5 dated PDFs).
+- The **linter report** shows **6/6 checks pass**; the deliberate **leak drill**
+  is **BLOCKED** (a `[team]` token leaking into a Parent Guide is caught — that
+  is the demo moment, not a bug).
+
+### Test without the app (no WorkBuddy needed)
+```bash
+cd casecraft
+python tools/dryrun.py            # both fictional students
+python tools/dryrun.py marco      # one student
+```
+Same loop, deterministic, over the repo fixtures. Both students: 6/6 linter +
+leak drill BLOCKED, PDFs dated today.
+
+> **Privacy note (say it this way):** the app and Whisper run locally, but LLM
+> summarisation is remote processing. CaseCraft is *secure-by-design* (human
+> review + pseudonymisation), not "everything stays on device."
+
+### Roadmap (not yet built)
+- Full-loop wiring: real transcript → session pipeline.
+- `/schedule <id> <date>` + Slack per-user DM delivery of each stakeholder's view.
+- Feedback loop: a daily Automation task that fires the day before a session.
+- MediaPipe observables → real `capture.md`; `/casenote` rapid mode.
 
 ## Contributing
 

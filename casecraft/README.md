@@ -77,22 +77,38 @@ loop in a single `SKILL.md` with both `/session` and `/casecraft` commands insid
 
 - **Upload Skill** (preferred): Skills tab → Add Skill → Upload Skill → select
   `casecraft/skills/casecraft` (folder or zip with `SKILL.md` at the root). One
-  upload registers both commands.
+  upload registers both commands. The install count goes 8 → 9 (there is no
+  separate `session` skill).
 - **Disk copy**: copy `casecraft/skills/casecraft/` into `~/.agents/skills/casecraft/`
   and restart WorkBuddy.
 - Authorise WorkBuddy to access the `casecraft/` folder (the skill reads
   `students/<id>/passport.md` from there).
 
-Then run, e.g.:
+### Full usage steps (for the team)
 
-```
-/session marco --goal="work experience: ask for help when unsure, no more than 2 prompts"
-```
+1. Open WorkBuddy (CodeBuddy.exe), sign in.
+2. **Skills → Add Skill → Upload Skill** → choose `casecraft/skills/casecraft`.
+   Wait for the install count to move 8 → 9.
+3. Authorise the `casecraft/` folder as the agent's workspace.
+4. Open a **New Task** and run, e.g.:
+   ```
+   /session marco --goal="work experience: ask for help when unsure, no more than 2 prompts"
+   ```
+   or generate a pack from a brief:
+   ```
+   /casecraft marco "First work-experience placement at Sunbeam Bakery next Tuesday 19 Aug,
+   9:00–15:30. Travel by MTR Jordan → Mong Kok. Supervisor is Mrs. Chan. Jobs: bagging rolls,
+   labelling boxes. Kitchen is warm and mixers are loud."
+   ```
+5. At the **review gate**, approve or edit — nothing merges without your sign-off.
+6. Output lands in `students/<id>/sessions/…/` (draft, gate, passport delta,
+   linter report 6/6, views as 4 `.md` + 5 PDFs). The deliberate leak drill shows
+   **BLOCKED** — that is the demo moment, not a failure.
 
-or
-
+### Test without the app
+```bash
+cd casecraft
+python tools/dryrun.py          # both students
+python tools/dryrun.py marco    # one student
 ```
-/casecraft marco "First work-experience placement at Sunbeam Bakery next Tuesday 19 Aug,
-9:00–15:30. Travel by MTR Jordan → Mong Kok. Supervisor is Mrs. Chan. Jobs: bagging rolls,
-labelling boxes. Kitchen is warm and mixers are loud."
-```
+Same loop, deterministic. Both students: 6/6 linter + leak drill BLOCKED.
