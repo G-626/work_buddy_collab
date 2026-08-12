@@ -6,10 +6,8 @@
 ## What's in this package
 
 | Path | What it is |
-|---|---|
-| `skills/casecraft/SKILL.md` + `templates/` | Generates the **Coordinated Support Pack** (Teacher Guide, Parent Report, Social Story, Therapist Summary) from a passport + situation brief, with a two-pass linter (methodology, cross-document consistency, **sensitivity-leak check**) |
-| `skills/session/SKILL.md` + `templates/` | The **Session Agent Loop**: ingest capture package → draft summary → human review gate → passport delta |
-| `commands/` | Slash-command surfaces: `/session` and `/casecraft` |
+|---|
+| `skills/casecraft/SKILL.md` + `skill.yml` + `templates/` | **One combined skill** — the whole agent loop (capture → review gate → passport delta → coordinated support pack) in a single `SKILL.md`, with both `/session` and `/casecraft` commands folded into one `## Commands` section. Generates the Coordinated Support Pack (Teacher Guide, Parent Report, Social Story, Therapist Summary) from a passport + situation brief, with a two-pass linter (methodology, cross-document consistency, **sensitivity-leak check**) |
 | `tools/dryrun.py` | Stdlib-only Level-1 demo engine — replays the whole loop over the fictional fixtures (no WorkBuddy needed) |
 | `tools/pdfrender.py` | Styled PDF export of the views (system dates, single-accent hierarchy, mirrored padding) |
 | `students/` | Fictional demo dossiers — **Marco** (14) and **Priya** (15), with capture packages + passports |
@@ -20,9 +18,14 @@
 
 ## How to import into WorkBuddy
 
-1. In the WorkBuddy desktop app, import the `casecraft` and `session` skills (Markdown skill files) and the two commands in `commands/`.
-2. Authorize a working folder (e.g. a students folder with `marco/` and `priya/` passports).
-3. Run `/session marco --goal="..."` to start the loop, or `/casecraft marco "<situation brief>"` to generate a pack.
+1. In the WorkBuddy desktop app, **Skills → Add Skill → Upload Skill** → select the
+   `skills/casecraft` folder (or a zip of it). `SKILL.md` must be at the root. One
+   upload registers the `casecraft` skill with both `/session` and `/casecraft` commands
+   (install count 8 → 9).
+2. Authorize a working folder (the `casecraft/` folder, which has `students/marco/`
+   and `students/priya/` passports).
+3. Run `/session marco --goal="..."` to start the loop, or `/casecraft marco "<situation brief>"`
+   to generate a pack.
 
 ## How to demo without the app (Level-1, deterministic)
 
