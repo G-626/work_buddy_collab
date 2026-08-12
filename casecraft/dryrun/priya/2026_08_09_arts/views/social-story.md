@@ -1,4 +1,4 @@
-# Social Story — Priya S. (FICTIONAL DEMO DATA) (2026-08-13)
+# Social Story — Priya S. (FICTIONAL DEMO DATA) (2026-08-12)
 
 Priya's art class has one big table. Everyone has a job.
 

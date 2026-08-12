@@ -1,4 +1,4 @@
-# Review gate — 2026-08-13
+# Review gate — 2026-08-12
 Approver: K. Wong, School Social Worker (observing; class taught by Ms. Liu)
 Decision: **APPROVED with one edit**
 - Q1 edit: "2-second look-down is within normal range for Priya in group
